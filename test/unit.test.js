@@ -23,18 +23,19 @@ test('parseTime accepts 24-hour times and rejects the rest', () => {
   assert.throws(() => parseTime('9.30'), /invalid --at/)
 })
 
-test('crontabWithout removes only the exact marked job and ignores prefix matches', () => {
+test('crontabWithout removes only the exact marked job and leaves others byte-identical', () => {
   const existing = [
     '0 1 * * * other-thing',
     '30 9 * * * /bin/bash run.sh # claude-jobs:alpha-2',
     '30 9 * * * /bin/bash run.sh # claude-jobs:alpha',
     '0 7 * * * /bin/bash run.sh # claude-jobs:beta',
   ].join('\n')
-  const result = crontabWithout(existing, 'alpha')
-  assert.ok(!result.includes('claude-jobs:alpha\n') && !result.endsWith('claude-jobs:alpha'))
-  assert.ok(result.includes('claude-jobs:alpha-2'))
-  assert.ok(result.includes('claude-jobs:beta'))
-  assert.ok(result.includes('other-thing'))
+  const expected = [
+    '0 1 * * * other-thing',
+    '30 9 * * * /bin/bash run.sh # claude-jobs:alpha-2',
+    '0 7 * * * /bin/bash run.sh # claude-jobs:beta',
+  ].join('\n')
+  assert.equal(crontabWithout(existing, 'alpha'), expected)
 })
 
 test('parseArgs splits positionals, valued flags and boolean flags', () => {

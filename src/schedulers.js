@@ -75,7 +75,7 @@ function currentCrontab() {
   }
 }
 
-const cronMarkerRegex = (name) => new RegExp(`# claude-jobs:${name}$`)
+const cronMarkerRegex = (name) => new RegExp(`# claude-jobs:${name}$`, 'm')
 
 export function crontabWithout(existing, name) {
   const regex = cronMarkerRegex(name)
