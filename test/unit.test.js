@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { crontabWithout, parseTime } from '../src/schedulers.js'
+import { crontabHas, crontabWithout, parseTime } from '../src/schedulers.js'
 import { parseArgs } from '../src/cli.js'
 import { render, shellQuote } from '../src/render.js'
 
@@ -36,6 +36,19 @@ test('crontabWithout removes only the exact marked job and leaves others byte-id
     '0 7 * * * /bin/bash run.sh # claude-jobs:beta',
   ].join('\n')
   assert.equal(crontabWithout(existing, 'alpha'), expected)
+})
+
+test('cron marker matching accepts trailing spaces and tabs without matching sibling names', () => {
+  const sibling = '30 9 * * * /bin/bash run.sh # claude-jobs:alpha-2\t'
+
+  for (const trailingWhitespace of ['  ', '\t']) {
+    const target = `30 9 * * * /bin/bash run.sh # claude-jobs:alpha${trailingWhitespace}`
+    const existing = `${sibling}\n${target}`
+
+    assert.equal(crontabHas(existing, 'alpha'), true)
+    assert.equal(crontabHas(sibling, 'alpha'), false)
+    assert.equal(crontabWithout(existing, 'alpha'), sibling)
+  }
 })
 
 test('parseArgs splits positionals, valued flags and boolean flags', () => {

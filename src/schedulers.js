@@ -75,13 +75,16 @@ function currentCrontab() {
   }
 }
 
-const cronMarkerRegex = (name) => new RegExp(`# claude-jobs:${name}$`, 'm')
+const cronMarkerRegex = (name) => new RegExp(`# claude-jobs:${name}[ \\t]*$`, 'm')
+
+export function crontabHas(existing, name) {
+  return cronMarkerRegex(name).test(existing)
+}
 
 export function crontabWithout(existing, name) {
-  const regex = cronMarkerRegex(name)
   return existing
     .split('\n')
-    .filter((line) => !regex.test(line.trimEnd()))
+    .filter((line) => !crontabHas(line, name))
     .join('\n')
     .replace(/\n{3,}/g, '\n\n')
 }
@@ -180,7 +183,7 @@ export function isInstalled(job) {
     }
   }
 
-  if (scheduler === 'cron') return cronMarkerRegex(name).test(currentCrontab())
+  if (scheduler === 'cron') return crontabHas(currentCrontab(), name)
   return false
 }
 
