@@ -82,11 +82,11 @@ export function crontabHas(existing, name) {
 }
 
 export function crontabWithout(existing, name) {
+  if (!crontabHas(existing, name)) return existing
   return existing
     .split('\n')
     .filter((line) => !crontabHas(line, name))
     .join('\n')
-    .replace(/\n{3,}/g, '\n\n')
 }
 
 function writeCrontab(content) {

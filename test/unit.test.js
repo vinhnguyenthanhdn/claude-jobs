@@ -25,17 +25,47 @@ test('parseTime accepts 24-hour times and rejects the rest', () => {
 
 test('crontabWithout removes only the exact marked job and leaves others byte-identical', () => {
   const existing = [
+    'MAILTO=""',
+    '',
+    '# nightly backup',
+    '0 1 * * * /usr/local/bin/backup.sh',
+    '',
+    '',
+    '# reports',
+    '0 6 * * 1 /usr/local/bin/weekly-report.sh',
+    '',
     '0 1 * * * other-thing',
     '30 9 * * * /bin/bash run.sh # claude-jobs:alpha-2',
     '30 9 * * * /bin/bash run.sh # claude-jobs:alpha',
     '0 7 * * * /bin/bash run.sh # claude-jobs:beta',
   ].join('\n')
   const expected = [
+    'MAILTO=""',
+    '',
+    '# nightly backup',
+    '0 1 * * * /usr/local/bin/backup.sh',
+    '',
+    '',
+    '# reports',
+    '0 6 * * 1 /usr/local/bin/weekly-report.sh',
+    '',
     '0 1 * * * other-thing',
     '30 9 * * * /bin/bash run.sh # claude-jobs:alpha-2',
     '0 7 * * * /bin/bash run.sh # claude-jobs:beta',
   ].join('\n')
   assert.equal(crontabWithout(existing, 'alpha'), expected)
+})
+
+test('crontabWithout is a byte-identical no-op when marker is absent', () => {
+  const foreign = [
+    'MAILTO=""',
+    '',
+    '',
+    '# nightly backup',
+    '0 1 * * * /usr/local/bin/backup.sh',
+    '',
+  ].join('\n')
+  assert.equal(crontabWithout(foreign, 'alpha'), foreign)
 })
 
 test('cron marker matching accepts trailing spaces and tabs without matching sibling names', () => {
