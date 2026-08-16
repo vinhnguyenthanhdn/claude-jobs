@@ -2,9 +2,10 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { execFileSync } from 'node:child_process'
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { homedir, platform } from 'node:os'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, URL } from 'node:url'
+import { renderTemplate } from '../src/render.js'
 
 const CLI = fileURLToPath(new URL('../bin/claude-jobs.js', import.meta.url))
 
@@ -85,4 +86,40 @@ test('a job name that would break a unit filename is rejected', () => {
   withHome((home) => {
     assert.throws(() => cli(home, ['init', 'Bad Name', '--task', 'x']), /invalid job name/)
   })
+})
+
+test('renders all scheduler templates without errors', () => {
+  const vars = {
+    JOB_NAME: 'demo',
+    LABEL: 'com.claude-jobs.demo',
+    RUNNER: '/home/user/.claude-jobs/runners/demo.sh',
+    LOG_FILE: '/home/user/.claude-jobs/logs/demo-summary.md',
+    WORKDIR: '/home/user/.claude-jobs/jobs/demo',
+    HOUR: 9,
+    MINUTE: 30,
+    HOUR_PADDED: '09',
+    MINUTE_PADDED: '30',
+  }
+
+  // Render launchd.plist
+  const launchdResult = renderTemplate('launchd.plist', vars)
+  assert.ok(launchdResult, 'launchd.plist should render')
+  assert.ok(launchdResult.includes('com.claude-jobs.demo'), 'launchd should contain LABEL')
+  assert.ok(launchdResult.includes('/home/user/.claude-jobs/runners/demo.sh'), 'launchd should contain RUNNER')
+  assert.ok(launchdResult.includes('/home/user/.claude-jobs/logs/demo-summary.md'), 'launchd should contain LOG_FILE')
+  assert.ok(launchdResult.includes('09'), 'launchd should contain HOUR')
+  assert.ok(!launchdResult.includes('{{'), 'launchd should have no unresolved placeholders')
+
+  // Render systemd.service
+  const systemdService = renderTemplate('systemd.service', vars)
+  assert.ok(systemdService, 'systemd.service should render')
+  assert.ok(systemdService.includes('claude-jobs-demo.service'), 'systemd.service should contain JOB_NAME')
+  assert.ok(!systemdService.includes('{{'), 'systemd.service should have no unresolved placeholders')
+
+  // Render systemd.timer
+  const systemdTimer = renderTemplate('systemd.timer', vars)
+  assert.ok(systemdTimer, 'systemd.timer should render')
+  assert.ok(systemdTimer.includes('claude-jobs-demo.timer'), 'systemd.timer should contain JOB_NAME')
+  assert.ok(systemdTimer.includes('OnCalendar=*-*-* 09:30:00'), 'systemd.timer should contain OnCalendar with HOUR and MINUTE')
+  assert.ok(!systemdTimer.includes('{{'), 'systemd.timer should have no unresolved placeholders')
 })
