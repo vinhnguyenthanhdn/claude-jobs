@@ -21,6 +21,23 @@ jobs:
       - run: npm run check
       - run: npm test
 
+  scope-guard:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+      - name: Removed public exports must be named in the PR description
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/scope-guard.mjs "$BASE_SHA" "$HEAD_SHA"
+
   pack:
     runs-on: ubuntu-latest
     steps:

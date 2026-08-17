@@ -27,6 +27,7 @@ CLAUDE_JOBS_HOME=/tmp/cj-scratch node bin/claude-jobs.js run demo --dry-run
 - **Generated scripts are readable.** Someone will open `run.sh` at 3am. Keep the comments that explain *why* a line exists.
 - **Fail at generation time, not at runtime.** An unknown template placeholder or a malformed time should throw during `init`, not silently produce a broken unit.
 - **Never touch credentials.** The CLI owns its own auth. This package must not read, store or forward tokens.
+- **Stay inside the change you are describing.** `src/index.js` is what `npm install claude-jobs` resolves to, so removing an export from `src/` breaks somebody's script. You may still do it — but the PR description has to name each export that goes away and say why. CI enforces this: the `scope-guard` job compares the exports of every changed `src/*.js` between the base and your branch and fails on a removal the description does not mention. Rewriting a file wholesale usually trips it, and that is the intent.
 
 ## Especially welcome
 

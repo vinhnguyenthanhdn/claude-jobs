@@ -4,6 +4,14 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- A `scope-guard` CI job (`scripts/scope-guard.mjs`): a pull request that removes an export
+  from `src/` fails unless the description names that export. `src/index.js` is what
+  `npm install claude-jobs` resolves to, so a removal there breaks installed code, and the
+  rule was previously only prose. The scanner is covered by tests, including one that pins
+  the current public surface of `src/index.js`.
+
 ## [0.1.5] — 2026-08-17
 
 ### Fixed
