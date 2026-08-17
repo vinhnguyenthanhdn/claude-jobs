@@ -87,6 +87,21 @@ export function cmdInit(args, flags) {
   if (existsSync(jobDir(name)) && !flags.force) {
     throw new Error(`job "${name}" already exists. Pass --force to overwrite it.`)
   }
+  if (flags.jitter !== undefined) {
+    if (typeof flags.jitter === 'boolean' || !/^\d+$/.test(String(flags.jitter))) {
+      throw new Error(`--jitter must be a non-negative integer. Received "${flags.jitter}".`)
+    }
+  }
+  if (flags.skill !== undefined) {
+    if (typeof flags.skill === 'boolean' || !existsSync(resolve(flags.skill))) {
+      throw new Error(`--skill file not found: "${flags.skill}".`)
+    }
+  }
+  if (flags['prompt-file'] !== undefined) {
+    if (typeof flags['prompt-file'] === 'boolean' || !existsSync(resolve(flags['prompt-file']))) {
+      throw new Error(`--prompt-file not found: "${flags['prompt-file']}".`)
+    }
+  }
   ensureDirs()
 
   const job = buildJob(name, flags)

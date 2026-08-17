@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -61,6 +61,42 @@ test('init refuses to clobber an existing job without --force', () => {
     cli(home, ['init', 'demo', '--task', 'x'])
     assert.throws(() => cli(home, ['init', 'demo', '--task', 'y']), /already exists/)
     cli(home, ['init', 'demo', '--task', 'y', '--force'])
+  })
+})
+
+test('init rejects invalid flags and writes no files (#13)', () => {
+  withHome((home) => {
+    // 1. Non-numeric jitter
+    assert.throws(
+      () => cli(home, ['init', 'p1', '--task', 'hi', '--jitter', 'abc']),
+      /--jitter must be a non-negative integer/,
+    )
+    assert.equal(existsSync(join(home, 'jobs', 'p1')), false)
+
+    // 2. Missing value for jitter
+    assert.throws(
+      () => cli(home, ['init', 'p2', '--task', 'hi', '--jitter']),
+      /--jitter must be a non-negative integer/,
+    )
+    assert.equal(existsSync(join(home, 'jobs', 'p2')), false)
+
+    // 3. Missing skill file
+    assert.throws(
+      () => cli(home, ['init', 'p3', '--skill', './nonexistent-file.md']),
+      /--skill file not found/,
+    )
+    assert.equal(existsSync(join(home, 'jobs', 'p3')), false)
+
+    // 4. Missing prompt-file
+    assert.throws(
+      () => cli(home, ['init', 'p4', '--prompt-file', './nonexistent-prompt.md']),
+      /--prompt-file not found/,
+    )
+    assert.equal(existsSync(join(home, 'jobs', 'p4')), false)
+
+    // 5. Jitter 0 is valid
+    cli(home, ['init', 'p5', '--task', 'hi', '--jitter', '0'])
+    assert.equal(existsSync(join(home, 'jobs', 'p5')), true)
   })
 })
 
