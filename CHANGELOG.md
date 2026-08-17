@@ -16,6 +16,14 @@ All notable changes to this project are documented here. Format follows [Keep a 
   file that does not exist — all three reported `Created job` and exited 0, so the failure
   surfaced days later in a run log. A rejected `init` now leaves no job directory behind.
   Thanks to @emre155 (#15).
+- Every `init` flag documented as taking a value is rejected by name when the value is
+  missing. #15 covered three of them; the parser still turned the other ten into the boolean
+  `true`, and six of those exited 0 — `--claude` with no value produced a job whose Claude
+  binary was `/usr/bin/true`, which the runner's "binary not found" guard accepts, so every
+  scheduled session ran that and logged `exit=0` with no summary. `--scheduler` was checked
+  after the job had been written, leaving a half-job that took `claude-jobs list` down for
+  every job sorted after it. The scheduler name is now validated before the first write.
+  Thanks to @rigel08 (#16).
 
 ### Added
 
