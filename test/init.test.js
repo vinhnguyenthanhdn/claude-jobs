@@ -2,9 +2,9 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { execFileSync } from 'node:child_process'
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
-import { homedir, platform } from 'node:os'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { fileURLToPath, URL } from 'node:url'
+import { fileURLToPath } from 'node:url'
 import { renderTemplate } from '../src/render.js'
 
 const CLI = fileURLToPath(new URL('../bin/claude-jobs.js', import.meta.url))
@@ -88,7 +88,7 @@ test('a job name that would break a unit filename is rejected', () => {
   })
 })
 
-test('renders all scheduler templates without errors', () => {
+test('every scheduler template renders with the vars writeSchedulerFiles supplies', () => {
   const vars = {
     JOB_NAME: 'demo',
     LABEL: 'com.claude-jobs.demo',
@@ -101,25 +101,24 @@ test('renders all scheduler templates without errors', () => {
     MINUTE_PADDED: '30',
   }
 
-  // Render launchd.plist
-  const launchdResult = renderTemplate('launchd.plist', vars)
-  assert.ok(launchdResult, 'launchd.plist should render')
-  assert.ok(launchdResult.includes('com.claude-jobs.demo'), 'launchd should contain LABEL')
-  assert.ok(launchdResult.includes('/home/user/.claude-jobs/runners/demo.sh'), 'launchd should contain RUNNER')
-  assert.ok(launchdResult.includes('/home/user/.claude-jobs/logs/demo-summary.md'), 'launchd should contain LOG_FILE')
-  assert.ok(launchdResult.includes('09'), 'launchd should contain HOUR')
-  assert.ok(!launchdResult.includes('{{'), 'launchd should have no unresolved placeholders')
+  const launchd = renderTemplate('launchd.plist', vars)
+  assert.match(launchd, /<key>Label<\/key>\s*<string>com\.claude-jobs\.demo<\/string>/)
+  assert.ok(launchd.includes('<string>/home/user/.claude-jobs/runners/demo.sh</string>'))
+  assert.ok(launchd.includes('<string>/home/user/.claude-jobs/logs/demo-summary.md</string>'))
+  // launchd wants plist integers, so the unpadded HOUR/MINUTE belong here -- not the padded pair.
+  assert.match(launchd, /<key>Hour<\/key>\s*<integer>9<\/integer>/)
+  assert.match(launchd, /<key>Minute<\/key>\s*<integer>30<\/integer>/)
+  assert.ok(!launchd.includes('{{'), 'launchd.plist has an unresolved placeholder')
 
-  // Render systemd.service
-  const systemdService = renderTemplate('systemd.service', vars)
-  assert.ok(systemdService, 'systemd.service should render')
-  assert.ok(systemdService.includes('claude-jobs-demo.service'), 'systemd.service should contain JOB_NAME')
-  assert.ok(!systemdService.includes('{{'), 'systemd.service should have no unresolved placeholders')
+  const service = renderTemplate('systemd.service', vars)
+  assert.ok(service.includes('Description=claude-jobs: demo'))
+  assert.ok(service.includes('ExecStart=/bin/bash /home/user/.claude-jobs/runners/demo.sh'))
+  assert.ok(service.includes('WorkingDirectory=/home/user/.claude-jobs/jobs/demo'))
+  assert.ok(!service.includes('{{'), 'systemd.service has an unresolved placeholder')
 
-  // Render systemd.timer
-  const systemdTimer = renderTemplate('systemd.timer', vars)
-  assert.ok(systemdTimer, 'systemd.timer should render')
-  assert.ok(systemdTimer.includes('claude-jobs-demo.timer'), 'systemd.timer should contain JOB_NAME')
-  assert.ok(systemdTimer.includes('OnCalendar=*-*-* 09:30:00'), 'systemd.timer should contain OnCalendar with HOUR and MINUTE')
-  assert.ok(!systemdTimer.includes('{{'), 'systemd.timer should have no unresolved placeholders')
+  const timer = renderTemplate('systemd.timer', vars)
+  assert.ok(timer.includes('Description=claude-jobs timer: demo'))
+  // systemd parses the calendar field positionally, so here the padded pair is the correct one.
+  assert.ok(timer.includes('OnCalendar=*-*-* 09:30:00'))
+  assert.ok(!timer.includes('{{'), 'systemd.timer has an unresolved placeholder')
 })
