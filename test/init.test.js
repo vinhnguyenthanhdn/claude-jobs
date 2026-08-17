@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -76,7 +76,7 @@ test('init rejects invalid flags and writes no files (#13)', () => {
     // 2. Missing value for jitter
     assert.throws(
       () => cli(home, ['init', 'p2', '--task', 'hi', '--jitter']),
-      /--jitter must be a non-negative integer/,
+      /--jitter requires a value/,
     )
     assert.equal(existsSync(join(home, 'jobs', 'p2')), false)
 
@@ -113,6 +113,74 @@ test('init rejects an invalid scheduler without writing files (#16)', () => {
     const out = cli(home, ['list'])
     assert.match(out, /existing/)
     assert.doesNotMatch(out, /bad-scheduler/)
+  })
+})
+
+// Every flag in the `init options` block of USAGE that takes a value. A flag
+// missing from this list becomes the boolean `true` and the job is created with
+// it, which is what #16 reported.
+const INIT_VALUE_FLAGS = [
+  'skill',
+  'task',
+  'prompt-file',
+  'at',
+  'jitter',
+  'workdir',
+  'scheduler',
+  'claude',
+  'model',
+  'permission-mode',
+  'precheck',
+  'notify',
+  'path',
+]
+
+test('a value flag with no value is rejected by name and writes nothing (#16)', () => {
+  for (const flag of INIT_VALUE_FLAGS) {
+    withHome((home) => {
+      const name = `missing-${flag}`
+      assert.throws(
+        () => cli(home, ['init', name, '--task', 'hi', `--${flag}`]),
+        new RegExp(`--${flag} requires a value`),
+        `--${flag} with no value should be rejected by name`,
+      )
+      // Not the shape #16 called out: no Node type error, no job left behind.
+      assert.equal(existsSync(join(home, 'jobs', name)), false)
+    })
+  }
+})
+
+test('boolean flags are unaffected by the value-flag rule (#16)', () => {
+  withHome((home) => {
+    cli(home, ['init', 'b1', '--task', 'hi'])
+    // --force takes no value and must still overwrite rather than be rejected.
+    cli(home, ['init', 'b1', '--task', 'hi again', '--force'])
+    assert.match(readFileSync(join(home, 'jobs', 'b1', 'prompt.md'), 'utf8'), /hi again/)
+    // --dry-run likewise: it is read as a flag, not as a missing value.
+    assert.match(cli(home, ['run', 'b1', '--dry-run']), /\[dry-run\]/)
+  })
+})
+
+test('a rejected init writes no scheduler file either (#16)', () => {
+  withHome((home) => {
+    const template = join(home, 'bad-template.md')
+    writeFileSync(template, 'Task: {{TASK}}\nBogus: {{NOPE}}\n')
+
+    // launchd writes its plist under HOME, outside the jobs directory, so the
+    // "nothing left behind" claim has to be checked there too.
+    assert.throws(
+      () =>
+        execFileSync(process.execPath, [CLI, 'init', 'orphan', '--task', 'hi', '--prompt-file', template], {
+          encoding: 'utf8',
+          env: { ...process.env, HOME: home, CLAUDE_JOBS_HOME: home, CLAUDE_JOBS_SCHEDULER: 'launchd' },
+        }),
+      /template placeholder \{\{NOPE\}\} has no value/,
+    )
+
+    // The scheduler file is the one that matters here: it names a runner, so
+    // writing it before the runner exists would schedule a path that is not there.
+    assert.equal(existsSync(join(home, 'Library', 'LaunchAgents', 'com.claude-jobs.orphan.plist')), false)
+    assert.equal(existsSync(join(home, 'jobs', 'orphan', 'run.sh')), false)
   })
 })
 

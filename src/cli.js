@@ -43,9 +43,14 @@ init options:
 Docs: https://github.com/vinhnguyenthanhdn/claude-jobs
 `
 
+// Every flag in the `init options` block of USAGE that takes a value. One list,
+// because two lists that can drift is the same bug in a different shape (#16).
 const INIT_VALUE_FLAGS = new Set([
+  'skill',
   'task',
+  'prompt-file',
   'at',
+  'jitter',
   'workdir',
   'scheduler',
   'claude',

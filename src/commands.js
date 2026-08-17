@@ -103,17 +103,19 @@ export function cmdInit(args, flags) {
       throw new Error(`--prompt-file not found: "${flags['prompt-file']}".`)
     }
   }
-const job = buildJob(name, flags)
-const created = writeSchedulerFiles(job)
+  const job = buildJob(name, flags)
+  // Everything that can reject the job runs before the first write, so a
+  // rejected init leaves nothing behind (#16).
+  assertValidScheduler(job.scheduler)
 
-ensureDirs()
-
-writeJob(name, job)
-writeFileSync(
-  promptFile(name),
-  render(readPromptTemplate(flags), { TASK: job.task, SUMMARY_FILE: summaryFile(name) }),
-)
-writeRunner(job)
+  ensureDirs()
+  writeJob(name, job)
+  writeFileSync(
+    promptFile(name),
+    render(readPromptTemplate(flags), { TASK: job.task, SUMMARY_FILE: summaryFile(name) }),
+  )
+  writeRunner(job)
+  const created = writeSchedulerFiles(job)
 
   console.log(`Created job "${name}"`)
   console.log(`  prompt    ${promptFile(name)}`)
