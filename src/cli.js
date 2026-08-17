@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import {
   cmdDoctor,
   cmdInit,
@@ -9,7 +9,7 @@ import {
   cmdRun,
   cmdStatus,
   cmdUninstall,
-} from './commands.js'
+} from "./commands.js";
 
 const USAGE = `claude-jobs — scheduled, unattended Claude Code CLI runs (no API key)
 
@@ -41,71 +41,110 @@ init options:
   --force                 overwrite an existing job
 
 Docs: https://github.com/vinhnguyenthanhdn/claude-jobs
-`
+`;
+const VALUED_FLAGS = [
+  "at",
+  "scheduler",
+  "workdir",
+  "claude",
+  "task",
+  "notify",
+  "model",
+  "permission-mode",
+  "precheck",
+  "path",
+  "jitter",
+  "skill",
+  "prompt-file",
+];
 
 export function parseArgs(argv) {
-  const args = []
-  const flags = {}
+  const args = [];
+  const flags = {};
   for (let i = 0; i < argv.length; i += 1) {
-    const token = argv[i]
-    if (!token.startsWith('--')) {
-      args.push(token)
-      continue
+    const token = argv[i];
+    if (!token.startsWith("--")) {
+      args.push(token);
+      continue;
     }
-    const key = token.slice(2)
-    const next = argv[i + 1]
-    if (next === undefined || next.startsWith('--')) {
-      flags[key] = true
+    const key = token.slice(2);
+    const next = argv[i + 1];
+    if (next === undefined || next.startsWith("--")) {
+      if (VALUED_FLAGS.includes(key)) {
+        console.error(`claude-jobs: --${key} requires a value`);
+        process.exit(1);
+      }
+      flags[key] = true;
     } else {
-      flags[key] = next
-      i += 1
+      flags[key] = next;
+      i += 1;
     }
   }
-  return { args, flags }
+  return { args, flags };
 }
 
 export function version() {
-  const pkg = JSON.parse(readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'))
-  return pkg.version
+  const pkg = JSON.parse(
+    readFileSync(
+      fileURLToPath(new URL("../package.json", import.meta.url)),
+      "utf8",
+    ),
+  );
+  return pkg.version;
 }
 
 export async function main(argv) {
-  const { args, flags } = parseArgs(argv)
-  const command = args.shift()
+  const { args, flags } = parseArgs(argv);
+  const command = args.shift();
 
-  if (flags.version || command === 'version') {
-    console.log(version())
-    return
+  if (flags.version || command === "version") {
+    console.log(version());
+    return;
   }
 
-  if (!command || flags.help || command === 'help') {
-    console.log(USAGE)
-    return
+  if (!command || flags.help || command === "help") {
+    console.log(USAGE);
+    return;
   }
 
   switch (command) {
-    case 'init':
-      return cmdInit(args, flags)
-    case 'list':
-      return cmdList()
-    case 'run':
-      if (!args[0]) throw new Error('run needs a job name. Run "claude-jobs list" to see them.')
-      return cmdRun(args, flags)
-    case 'install':
-      if (!args[0]) throw new Error('install needs a job name. Run "claude-jobs list" to see them.')
-      return cmdInstall(args)
-    case 'uninstall':
-      if (!args[0]) throw new Error('uninstall needs a job name. Run "claude-jobs list" to see them.')
-      return cmdUninstall(args, flags)
-    case 'logs':
-      if (!args[0]) throw new Error('logs needs a job name. Run "claude-jobs list" to see them.')
-      return cmdLogs(args, flags)
-    case 'status':
-      if (!args[0]) throw new Error('status needs a job name. Run "claude-jobs list" to see them.')
-      return cmdStatus(args)
-    case 'doctor':
-      return cmdDoctor()
+    case "init":
+      return cmdInit(args, flags);
+    case "list":
+      return cmdList();
+    case "run":
+      if (!args[0])
+        throw new Error(
+          'run needs a job name. Run "claude-jobs list" to see them.',
+        );
+      return cmdRun(args, flags);
+    case "install":
+      if (!args[0])
+        throw new Error(
+          'install needs a job name. Run "claude-jobs list" to see them.',
+        );
+      return cmdInstall(args);
+    case "uninstall":
+      if (!args[0])
+        throw new Error(
+          'uninstall needs a job name. Run "claude-jobs list" to see them.',
+        );
+      return cmdUninstall(args, flags);
+    case "logs":
+      if (!args[0])
+        throw new Error(
+          'logs needs a job name. Run "claude-jobs list" to see them.',
+        );
+      return cmdLogs(args, flags);
+    case "status":
+      if (!args[0])
+        throw new Error(
+          'status needs a job name. Run "claude-jobs list" to see them.',
+        );
+      return cmdStatus(args);
+    case "doctor":
+      return cmdDoctor();
     default:
-      throw new Error(`unknown command "${command}". Run "claude-jobs help".`)
+      throw new Error(`unknown command "${command}". Run "claude-jobs help".`);
   }
 }
