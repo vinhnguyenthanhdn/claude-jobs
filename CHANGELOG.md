@@ -10,6 +10,12 @@ All notable changes to this project are documented here. Format follows [Keep a 
   job name off. They used to pass `undefined` into path construction, so the CLI answered a
   question about arguments with a Node type error about the `path` argument. Thanks to
   @emre155 (#14).
+- `init` refuses flag values it cannot use, before it writes anything. `--jitter abc` used to
+  reach the generated runner as `JITTER=NaN`, `--jitter` with no value silently became `1`
+  where the documented default is `900`, and `--skill ./missing.md` scheduled a job to read a
+  file that does not exist — all three reported `Created job` and exited 0, so the failure
+  surfaced days later in a run log. A rejected `init` now leaves no job directory behind.
+  Thanks to @emre155 (#15).
 
 ### Added
 
