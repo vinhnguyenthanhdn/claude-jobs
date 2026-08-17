@@ -4,6 +4,13 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Fixed
+
+- `run`, `install`, `uninstall`, `logs` and `status` say what is missing when you leave the
+  job name off. They used to pass `undefined` into path construction, so the CLI answered a
+  question about arguments with a Node type error about the `path` argument. Thanks to
+  @emre155 (#14).
+
 ### Added
 
 - A `scope-guard` CI job (`scripts/scope-guard.mjs`): a pull request that removes an export
