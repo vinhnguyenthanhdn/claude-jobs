@@ -15,6 +15,7 @@ import {
   writeJob,
 } from './paths.js'
 import {
+  assertValidScheduler,
   cronLine,
   defaultScheduler,
   install,
@@ -102,16 +103,17 @@ export function cmdInit(args, flags) {
       throw new Error(`--prompt-file not found: "${flags['prompt-file']}".`)
     }
   }
-  ensureDirs()
+const job = buildJob(name, flags)
+const created = writeSchedulerFiles(job)
 
-  const job = buildJob(name, flags)
-  writeJob(name, job)
-  writeFileSync(
-    promptFile(name),
-    render(readPromptTemplate(flags), { TASK: job.task, SUMMARY_FILE: summaryFile(name) }),
-  )
-  writeRunner(job)
-  const created = writeSchedulerFiles(job)
+ensureDirs()
+
+writeJob(name, job)
+writeFileSync(
+  promptFile(name),
+  render(readPromptTemplate(flags), { TASK: job.task, SUMMARY_FILE: summaryFile(name) }),
+)
+writeRunner(job)
 
   console.log(`Created job "${name}"`)
   console.log(`  prompt    ${promptFile(name)}`)

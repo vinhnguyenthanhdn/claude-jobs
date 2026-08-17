@@ -14,6 +14,12 @@ export function defaultScheduler() {
   return 'cron'
 }
 
+export function assertValidScheduler(scheduler) {
+  if (scheduler !== 'launchd' && scheduler !== 'systemd' && scheduler !== 'cron') {
+    throw new Error(`unknown scheduler "${scheduler}". Use launchd, systemd or cron.`)
+  }
+}
+
 export function parseTime(value) {
   const match = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(String(value).trim())
   if (!match) throw new Error(`invalid --at "${value}". Use 24-hour HH:MM, e.g. 09:30.`)
@@ -60,7 +66,7 @@ export function writeSchedulerFiles(job) {
 
   if (scheduler === 'cron') return []
 
-  throw new Error(`unknown scheduler "${scheduler}". Use launchd, systemd or cron.`)
+  assertValidScheduler(scheduler)
 }
 
 export function cronLine(job) {

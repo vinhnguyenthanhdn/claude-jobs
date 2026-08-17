@@ -99,6 +99,23 @@ test('init rejects invalid flags and writes no files (#13)', () => {
     assert.equal(existsSync(join(home, 'jobs', 'p5')), true)
   })
 })
+test('init rejects an invalid scheduler without writing files (#16)', () => {
+  withHome((home) => {
+    cli(home, ['init', 'existing', '--task', 'hi'])
+
+    assert.throws(
+      () => cli(home, ['init', 'bad-scheduler', '--task', 'hi', '--scheduler', 'garbage']),
+      /unknown scheduler "garbage"\. Use launchd, systemd or cron\./,
+    )
+
+    assert.equal(existsSync(join(home, 'jobs', 'bad-scheduler')), false)
+
+    const out = cli(home, ['list'])
+    assert.match(out, /existing/)
+    assert.doesNotMatch(out, /bad-scheduler/)
+  })
+})
+
 
 test('--version prints the package version', () => {
   withHome((home) => {
