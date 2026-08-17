@@ -148,3 +148,7 @@ export async function main(argv) {
       throw new Error(`unknown command "${command}". Run "claude-jobs help".`);
   }
 }
+main(process.argv.slice(2)).catch((err) => {
+  console.error(`claude-jobs: ${err.message}`);
+  process.exit(1);
+});
