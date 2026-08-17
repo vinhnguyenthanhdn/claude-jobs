@@ -122,3 +122,20 @@ test('every scheduler template renders with the vars writeSchedulerFiles supplie
   assert.ok(timer.includes('OnCalendar=*-*-* 09:30:00'))
   assert.ok(!timer.includes('{{'), 'systemd.timer has an unresolved placeholder')
 })
+
+test('commands requiring a job name exit non-zero with clean message when omitted', () => {
+  withHome((home) => {
+    for (const cmd of ['run', 'install', 'uninstall', 'logs', 'status']) {
+      assert.throws(
+        () => cli(home, [cmd]),
+        (err) => {
+          const text = String(err.stderr || err.stdout || err.message)
+          assert.match(text, new RegExp(`claude-jobs: ${cmd} needs a job name\\. Run "claude-jobs list" to see them\\.`))
+          assert.doesNotMatch(text, /TypeError/)
+          assert.doesNotMatch(text, /The "path" argument must be of type string/)
+          return true
+        },
+      )
+    }
+  })
+})

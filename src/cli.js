@@ -89,14 +89,19 @@ export async function main(argv) {
     case 'list':
       return cmdList()
     case 'run':
+      if (!args[0]) throw new Error('run needs a job name. Run "claude-jobs list" to see them.')
       return cmdRun(args, flags)
     case 'install':
+      if (!args[0]) throw new Error('install needs a job name. Run "claude-jobs list" to see them.')
       return cmdInstall(args)
     case 'uninstall':
+      if (!args[0]) throw new Error('uninstall needs a job name. Run "claude-jobs list" to see them.')
       return cmdUninstall(args, flags)
     case 'logs':
+      if (!args[0]) throw new Error('logs needs a job name. Run "claude-jobs list" to see them.')
       return cmdLogs(args, flags)
     case 'status':
+      if (!args[0]) throw new Error('status needs a job name. Run "claude-jobs list" to see them.')
       return cmdStatus(args)
     case 'doctor':
       return cmdDoctor()
