@@ -31,6 +31,13 @@ All notable changes to this project are documented here. Format follows [Keep a 
   the CLI, and a later `init` with the same name silently resumed appending to the old job's
   log. Purge is a no-op, not an error, for a file that was never created. Thanks to
   @vinhnguyenthanhdn (#22).
+- `init` renders the prompt template before it writes anything. A `--prompt-file` holding a
+  placeholder the renderer has no value for used to fail *between* the first write and the
+  last, leaving a `job.json` with no `prompt.md` and no `run.sh` — a name taken by a job that
+  cannot run, which `list` and `status` both reported as ordinary and exited 0 on. Under
+  `--force` it was worse: the new `job.json` landed beside the old `prompt.md`, so the
+  recorded task and the prompt disagreed. Rendering output for every valid invocation is
+  unchanged. Thanks to @dchaudhari7177 (#19).
 
 ### Added
 
