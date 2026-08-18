@@ -18,7 +18,7 @@ Usage:
   claude-jobs list                    list jobs and whether they are scheduled
   claude-jobs run <name> [--now]      run a job now (--dry-run prints the plan)
   claude-jobs install <name>          register the job with the OS scheduler
-  claude-jobs uninstall <name>        unregister it (--purge also deletes the files)
+  claude-jobs uninstall <name>        unregister it (--purge also deletes its job dir, log and summary)
   claude-jobs logs <name> [--lines N] tail the job log
   claude-jobs status <name>           schedule, paths and the last summary
   claude-jobs doctor                  check the CLI, its login and the scheduler

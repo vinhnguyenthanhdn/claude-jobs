@@ -172,13 +172,45 @@ export function cmdInstall(args) {
   console.log(`Installed "${job.name}" via ${job.scheduler}.`)
 }
 
+/**
+ * Everything on disk that belongs to a job.
+ *
+ * Kept as one list so a future path cannot be added to `paths.js` and quietly
+ * missed here — which is how the log and the summary came to survive a purge
+ * and end up unreachable, with `logs` and `status` both refusing a name that
+ * no longer has a `job.json`.
+ */
+export function jobPaths(name) {
+  return [jobDir(name), logFile(name), summaryFile(name)]
+}
+
+/**
+ * Remove every file belonging to a job, returning the paths actually removed.
+ *
+ * Split out of `cmdUninstall` so it is unit-testable: `uninstall()` shells out
+ * to the scheduler, which a test cannot rely on being present.
+ *
+ * A job that never ran has no log and no summary, so absent paths are skipped
+ * silently rather than reported — printing a removal that did not happen is
+ * its own small lie.
+ */
+export function purgeJobFiles(name) {
+  const removed = []
+  for (const path of jobPaths(name)) {
+    if (!existsSync(path)) continue
+    rmSync(path, { recursive: true, force: true })
+    removed.push(path)
+  }
+  return removed
+}
+
 export function cmdUninstall(args, flags) {
   const job = readJob(args[0])
   uninstall(job)
   console.log(`Uninstalled "${job.name}" from ${job.scheduler}.`)
   if (flags.purge) {
-    rmSync(jobDir(job.name), { recursive: true, force: true })
-    console.log(`Removed ${jobDir(job.name)}`)
+    // A delete you cannot see is the reason this went unnoticed.
+    for (const path of purgeJobFiles(job.name)) console.log(`Removed ${path}`)
   }
 }
 
