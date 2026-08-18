@@ -30,6 +30,7 @@ init options:
   --prompt-file <path>    use your own prompt template instead of the built-in one
   --at <HH:MM>            daily start time, 24-hour (default 09:00)
   --jitter <seconds>      random extra delay before starting (default 900, 0 disables)
+  --log-max-bytes <n>     rotate the log to <log>.1 past this size (default 5242880, 0 disables)
   --workdir <path>        directory the run starts in (default: current directory)
   --scheduler <name>      launchd | systemd | cron (default: per platform)
   --claude <path>         claude binary (default: whatever is on PATH)
@@ -51,6 +52,7 @@ const INIT_VALUE_FLAGS = new Set([
   'prompt-file',
   'at',
   'jitter',
+  'log-max-bytes',
   'workdir',
   'scheduler',
   'claude',

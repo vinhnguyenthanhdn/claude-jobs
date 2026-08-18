@@ -35,6 +35,35 @@ function findClaudeBinary() {
 }
 
 /** Writes run.sh from the template with every value baked in. */
+/**
+ * Default log cap, in bytes.
+ *
+ * A single 55-second run producing one tool call writes ~32 KB, because the
+ * session is logged in stream-json and every tool result lands verbatim. 5 MiB
+ * is therefore a few months of a modest daily job, and one generation of
+ * rollover bounds the job at twice that.
+ */
+export const DEFAULT_LOG_MAX_BYTES = 5 * 1024 * 1024
+
+/**
+ * Whether a log of `sizeBytes` should be rotated at a cap of `capBytes`.
+ *
+ * The rotation itself happens in the generated runner, because a scheduled run
+ * goes straight to run.sh and never enters this process. This is the rule the
+ * runner implements, kept here so it can be tested against its truth table
+ * rather than only by executing bash:
+ *
+ *     [ "$LOG_MAX_BYTES" -gt 0 ] && [ "$LOG_SIZE" -ge "$LOG_MAX_BYTES" ]
+ *
+ * A cap of 0 (or anything non-positive, or a non-number) means no rotation,
+ * which is the documented way to turn the feature off.
+ */
+export function shouldRotateLog(sizeBytes, capBytes) {
+  if (!Number.isFinite(capBytes) || capBytes <= 0) return false
+  if (!Number.isFinite(sizeBytes) || sizeBytes <= 0) return false
+  return sizeBytes >= capBytes
+}
+
 export function writeRunner(job) {
   const script = renderTemplate('run.sh', {
     JOB_NAME: job.name,
@@ -47,6 +76,9 @@ export function writeRunner(job) {
     PATH_VALUE: shellQuote(job.path),
     HOME_VALUE: shellQuote(job.home),
     JITTER: job.jitter,
+    // Jobs created before this option existed have no value recorded; they get
+    // the default when their runner is regenerated.
+    LOG_MAX_BYTES: job.logMaxBytes === undefined ? DEFAULT_LOG_MAX_BYTES : job.logMaxBytes,
     PERMISSION_MODE_Q: shellQuote(job.permissionMode),
     MODEL_Q: shellQuote(job.model || ''),
     PRECHECK_Q: shellQuote(job.precheck || ''),
@@ -73,6 +105,10 @@ export function buildJob(name, flags) {
     hour,
     minute,
     jitter: flags.jitter === undefined ? 900 : Number(flags.jitter),
+    logMaxBytes:
+      flags['log-max-bytes'] === undefined
+        ? DEFAULT_LOG_MAX_BYTES
+        : Number(flags['log-max-bytes']),
     permissionMode: flags['permission-mode'] || 'bypassPermissions',
     model: flags.model || '',
     precheck: flags.precheck || '',
@@ -91,6 +127,16 @@ export function cmdInit(args, flags) {
   if (flags.jitter !== undefined) {
     if (typeof flags.jitter === 'boolean' || !/^\d+$/.test(String(flags.jitter))) {
       throw new Error(`--jitter must be a non-negative integer. Received "${flags.jitter}".`)
+    }
+  }
+  if (flags['log-max-bytes'] !== undefined) {
+    if (
+      typeof flags['log-max-bytes'] === 'boolean' ||
+      !/^\d+$/.test(String(flags['log-max-bytes']))
+    ) {
+      throw new Error(
+        `--log-max-bytes must be a non-negative integer. Received "${flags['log-max-bytes']}".`,
+      )
     }
   }
   if (flags.skill !== undefined) {
