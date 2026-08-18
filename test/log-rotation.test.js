@@ -113,10 +113,16 @@ test('the rendered runner carries the cap the way it carries JITTER', () => {
     script.indexOf('LOG_MAX_BYTES" -gt 0') < script.indexOf('=== session start ==='),
     'rotation must happen before the session start marker',
   )
-  assert.ok(
-  script.indexOf('LOG_MAX_BYTES" -gt 0') < script.indexOf('# A job that fires at the same second every day'),
-  'rotation must happen before the jitter block',
-  ) 
+  // The session marker is not the first thing written: the jitter block logs a
+  // wake-up line and the precheck appends its own output, both before it. Anchor
+  // on the code that does that, not on the comment above it -- a reworded comment
+  // is not a broken ordering.
+  const rotateAt = script.indexOf('LOG_MAX_BYTES" -gt 0')
+  const jitterAt = script.indexOf('JITTER" -gt 0')
+  const precheckAt = script.indexOf('/bin/sh -c "$PRECHECK"')
+  assert.ok(jitterAt > 0 && precheckAt > 0, 'jitter and precheck blocks not found in the runner')
+  assert.ok(rotateAt < jitterAt, 'rotation must happen before the jitter block logs a wake-up line')
+  assert.ok(rotateAt < precheckAt, 'rotation must happen before the precheck appends its output')
 })
 
 test('rotation moves an oversize log to .1, leaving exactly two files', { skip: needsBash }, () => {

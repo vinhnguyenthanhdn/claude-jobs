@@ -4,6 +4,14 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Fixed
+
+- A rotating log no longer cuts the run that rotates it in half. Rotation ran after the
+  jitter block had already logged its wake-up line and after the precheck had appended its
+  output, so those lines ended up as the last thing in `<job>.log.1` while the surviving log
+  started mid-session. Rotation now happens before the runner writes anything. Thanks to
+  @ayushnegiexe (#31).
+
 ### Added
 
 - An `Upgrading` section in the README. `run.sh` is generated once, at `init`, so a fix that
