@@ -107,13 +107,21 @@ export function cmdInit(args, flags) {
   // Everything that can reject the job runs before the first write, so a
   // rejected init leaves nothing behind (#16).
   assertValidScheduler(job.scheduler)
+  // The render is one of those checks. It rejects a template with a placeholder
+  // it has no value for, and a --prompt-file makes that reachable with a
+  // perfectly valid flag value. It depends on nothing the writes produce, so
+  // evaluating it here rather than between writeJob and writeRunner is what
+  // keeps a rejected init from leaving a job.json with no prompt.md and no
+  // run.sh — a name taken by a job that cannot run, which list and status both
+  // report as ordinary (#19).
+  const prompt = render(readPromptTemplate(flags), {
+    TASK: job.task,
+    SUMMARY_FILE: summaryFile(name),
+  })
 
   ensureDirs()
   writeJob(name, job)
-  writeFileSync(
-    promptFile(name),
-    render(readPromptTemplate(flags), { TASK: job.task, SUMMARY_FILE: summaryFile(name) }),
-  )
+  writeFileSync(promptFile(name), prompt)
   writeRunner(job)
   const created = writeSchedulerFiles(job)
 
