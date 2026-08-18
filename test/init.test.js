@@ -240,6 +240,37 @@ test('every scheduler template renders with the vars schedulerVars supplies', ()
   assert.ok(!timer.includes('{{'), 'systemd.timer has an unresolved placeholder')
 })
 
+test('schedulerVars maps each key to the right source, not just any value the templates accept (#32)', () => {
+  const vars = schedulerVars({
+    name: 'demo',
+    hour: 9,
+    minute: 30,
+    workdir: '/home/user/.claude-jobs/jobs/demo',
+  })
+
+  // RUNNER and LOG_FILE come from different directories and must not collapse
+  // into each other -- that is the exact mistake this test exists to catch.
+  assert.match(vars.RUNNER, /\/demo\/run\.sh$/)
+  assert.match(vars.LOG_FILE, /\/logs\/demo\.log$/)
+  assert.notEqual(vars.RUNNER, vars.LOG_FILE)
+  assert.notEqual(vars.RUNNER, vars.WORKDIR)
+  assert.notEqual(vars.LOG_FILE, vars.WORKDIR)
+
+  assert.equal(vars.LABEL, 'com.claude-jobs.demo')
+
+  // HOUR/MINUTE and their padded counterparts serve different templates
+  // (launchd wants plist integers, systemd.timer wants a fixed-width
+  // calendar field) -- one is not a substitute for the other.
+  assert.equal(vars.HOUR, 9)
+  assert.equal(vars.MINUTE, 30)
+  assert.equal(vars.HOUR_PADDED, '09')
+  assert.equal(vars.MINUTE_PADDED, '30')
+  assert.equal(typeof vars.HOUR_PADDED, 'string')
+  assert.equal(vars.HOUR_PADDED.length, 2)
+  assert.equal(typeof vars.MINUTE_PADDED, 'string')
+  assert.equal(vars.MINUTE_PADDED.length, 2)
+})
+
 test('commands requiring a job name exit non-zero with clean message when omitted', () => {
   withHome((home) => {
     for (const cmd of ['run', 'install', 'uninstall', 'logs', 'status']) {
