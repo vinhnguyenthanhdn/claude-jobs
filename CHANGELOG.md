@@ -41,6 +41,14 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- The job log is rotated on size. Nothing used to trim it: the runner appends, the scheduler
+  points `StandardOutPath` at the same file, and the session itself is written there in
+  `stream-json`, so a single 55-second run with one tool call cost 32 KB and a daily job grew
+  forever. At the start of a run the runner now moves the log to `<name>.log.1` once it has
+  reached `--log-max-bytes` (default 5 MiB), replacing any older `.1` — one generation, so a
+  job is bounded at two files and the previous run is still readable. `0` restores the old
+  behaviour exactly. The cap is rendered into the generated runner beside `JITTER`, so an
+  existing job is changed by editing its `run.sh`. Thanks to @dchaudhari7177 (#21).
 - A `scope-guard` CI job (`scripts/scope-guard.mjs`): a pull request that removes an export
   from `src/` fails unless the description names that export. `src/index.js` is what
   `npm install claude-jobs` resolves to, so a removal there breaks installed code, and the
