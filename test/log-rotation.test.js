@@ -113,6 +113,10 @@ test('the rendered runner carries the cap the way it carries JITTER', () => {
     script.indexOf('LOG_MAX_BYTES" -gt 0') < script.indexOf('=== session start ==='),
     'rotation must happen before the session start marker',
   )
+  assert.ok(
+  script.indexOf('LOG_MAX_BYTES" -gt 0') < script.indexOf('# A job that fires at the same second every day'),
+  'rotation must happen before the jitter block',
+  ) 
 })
 
 test('rotation moves an oversize log to .1, leaving exactly two files', { skip: needsBash }, () => {

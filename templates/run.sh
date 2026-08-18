@@ -57,6 +57,21 @@ if [ "$DRY_RUN" = "1" ]; then
   exit 0
 fi
 
+# Nothing else trims this file: the runner appends, the scheduler points
+# StandardOutPath at it, and the session itself is written here in
+# stream-json, so every tool call and every tool result lands verbatim.
+# One generation is enough — the previous run is still there for the
+# post-mortem, and two files is a bound. Set LOG_MAX_BYTES=0 to disable.
+if [ "$LOG_MAX_BYTES" -gt 0 ] && [ -f "$LOG" ]; then
+  # BSD wc pads its output with leading spaces, which `test -ge` rejects;
+  # arithmetic expansion normalises it on both BSD and GNU.
+  LOG_SIZE=$(( $(wc -c < "$LOG" 2>/dev/null || echo 0) ))
+  if [ "$LOG_SIZE" -ge "$LOG_MAX_BYTES" ]; then
+    mv -f "$LOG" "$LOG.1"
+    log "rotated previous log (${LOG_SIZE} bytes >= ${LOG_MAX_BYTES}) to $LOG.1"
+  fi
+fi
+
 # A job that fires at the same second every day is a machine rhythm. Spreading
 # the start also keeps several jobs off the same usage-limit cliff.
 if [ "$SKIP_DELAY" = "0" ] && [ "$JITTER" -gt 0 ]; then
@@ -81,20 +96,6 @@ if [ ! -x "$CLAUDE_BIN" ] && ! command -v "$CLAUDE_BIN" >/dev/null 2>&1; then
   exit 1
 fi
 
-# Nothing else trims this file: the runner appends, the scheduler points
-# StandardOutPath at it, and the session itself is written here in
-# stream-json, so every tool call and every tool result lands verbatim.
-# One generation is enough — the previous run is still there for the
-# post-mortem, and two files is a bound. Set LOG_MAX_BYTES=0 to disable.
-if [ "$LOG_MAX_BYTES" -gt 0 ] && [ -f "$LOG" ]; then
-  # BSD wc pads its output with leading spaces, which `test -ge` rejects;
-  # arithmetic expansion normalises it on both BSD and GNU.
-  LOG_SIZE=$(( $(wc -c < "$LOG" 2>/dev/null || echo 0) ))
-  if [ "$LOG_SIZE" -ge "$LOG_MAX_BYTES" ]; then
-    mv -f "$LOG" "$LOG.1"
-    log "rotated previous log (${LOG_SIZE} bytes >= ${LOG_MAX_BYTES}) to $LOG.1"
-  fi
-fi
 
 log "=== session start ==="
 rm -f "$SUMMARY"
