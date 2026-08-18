@@ -18,12 +18,26 @@ function withHome(fn) {
   const prev = process.env.CLAUDE_JOBS_HOME
   process.env.CLAUDE_JOBS_HOME = home
   try {
-    return fn(home)
+    const result = fn(home)
+    if (result && typeof result.then === 'function') {
+      throw new Error('withHome() does not support async callbacks')
+    }
+    return result
   } finally {
     process.env.CLAUDE_JOBS_HOME = prev
     rmSync(home, { recursive: true, force: true })
   }
 }
+
+test('withHome rejects async callbacks', () => {
+  assert.throws(
+    () =>
+      withHome(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 5))
+      }),
+    /withHome\(\) does not support async callbacks/,
+  )
+})
 
 function makeJob(name) {
   ensureDirs()
