@@ -6,6 +6,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Fixed
 
+- `uninstall --purge` now also removes the rotated `<job>.log.1` left behind by log rotation,
+  instead of stranding a stale transcript of up to 5 MiB on disk.
 - A rotating log no longer cuts the run that rotates it in half. Rotation ran after the
   jitter block had already logged its wake-up line and after the precheck had appended its
   output, so those lines ended up as the last thing in `<job>.log.1` while the surviving log
