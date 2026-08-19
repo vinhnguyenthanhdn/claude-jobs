@@ -7,6 +7,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { renderTemplate } from '../src/render.js'
 import { schedulerVars } from '../src/schedulers.js'
+import { INIT_VALUE_FLAGS } from '../src/cli.js'
 
 const CLI = fileURLToPath(new URL('../bin/claude-jobs.js', import.meta.url))
 
@@ -117,24 +118,10 @@ test('init rejects an invalid scheduler without writing files (#16)', () => {
   })
 })
 
-// Every flag in the `init options` block of USAGE that takes a value. A flag
-// missing from this list becomes the boolean `true` and the job is created with
-// it, which is what #16 reported.
-const INIT_VALUE_FLAGS = [
-  'skill',
-  'task',
-  'prompt-file',
-  'at',
-  'jitter',
-  'workdir',
-  'scheduler',
-  'claude',
-  'model',
-  'permission-mode',
-  'precheck',
-  'notify',
-  'path',
-]
+// Every flag in the `init options` block of USAGE that takes a value. Sourced
+// from the parser itself so the test can't drift a flag behind it (#36): a flag
+// missing here becomes the boolean `true` and the job is created with it, which
+// is what #16 reported.
 
 test('a value flag with no value is rejected by name and writes nothing (#16)', () => {
   for (const flag of INIT_VALUE_FLAGS) {
