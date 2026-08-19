@@ -10,6 +10,7 @@ import {
   logFile,
   promptFile,
   readJob,
+  rotatedLogFile,
   runnerFile,
   summaryFile,
   writeJob,
@@ -231,7 +232,7 @@ export function cmdUninstall(args, flags) {
   uninstall(job)
   console.log(`Uninstalled "${job.name}" from ${job.scheduler}.`)
   if (flags.purge) {
-    for (const path of [jobDir(job.name), logFile(job.name), summaryFile(job.name)]) {
+    for (const path of [jobDir(job.name), logFile(job.name), rotatedLogFile(job.name), summaryFile(job.name)]) {
       if (!existsSync(path)) continue
       rmSync(path, { recursive: true, force: true })
       console.log(`Removed ${path}`)

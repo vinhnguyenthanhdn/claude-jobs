@@ -16,6 +16,8 @@ export const jobFile = (name) => join(jobDir(name), 'job.json')
 export const promptFile = (name) => join(jobDir(name), 'prompt.md')
 export const runnerFile = (name) => join(jobDir(name), 'run.sh')
 export const logFile = (name) => join(logsDir(), `${name}.log`)
+/** The previous generation written by run.sh when it rotates (`mv "$LOG" "$LOG.1"`). */
+export const rotatedLogFile = (name) => `${logFile(name)}.1`
 export const summaryFile = (name) => join(stateDir(), `${name}-summary.md`)
 
 export function ensureDirs() {

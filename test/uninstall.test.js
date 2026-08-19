@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync, writeFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { cmdUninstall } from '../src/commands.js'
-import { ensureDirs, jobDir, jobFile, logFile, summaryFile, writeJob } from '../src/paths.js'
+import { ensureDirs, jobDir, jobFile, logFile, rotatedLogFile, summaryFile, writeJob } from '../src/paths.js'
 
 // The real scheduler backends (launchd/systemd/cron) shell out to the OS and,
 // for cron, would rewrite the *real* user crontab. None of that is what
@@ -89,16 +89,19 @@ test('uninstall --purge removes the job dir, log and summary', () => {
   withHome(() => {
     makeJob('purge-me')
     writeFileSync(logFile('purge-me'), 'log output\n')
+    writeFileSync(rotatedLogFile('purge-me'), 'rotated log\n')
     writeFileSync(summaryFile('purge-me'), '# summary\n')
 
     const lines = captureLog(() => cmdUninstall(['purge-me'], { purge: true }))
 
     assert.ok(!existsSync(jobDir('purge-me')), 'job dir should be gone')
     assert.ok(!existsSync(logFile('purge-me')), 'log file should be gone')
+    assert.ok(!existsSync(rotatedLogFile('purge-me')), 'rotated log should be gone')
     assert.ok(!existsSync(summaryFile('purge-me')), 'summary file should be gone')
 
     assert.ok(lines.some((l) => l.includes(jobDir('purge-me'))))
     assert.ok(lines.some((l) => l.includes(logFile('purge-me'))))
+    assert.ok(lines.some((l) => l.includes(rotatedLogFile('purge-me'))))
     assert.ok(lines.some((l) => l.includes(summaryFile('purge-me'))))
   })
 })
