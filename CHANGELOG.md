@@ -6,6 +6,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Fixed
 
+- `uninstall --purge` now also removes the rotated log (`<job>.log.1`). A job that had
+  rotated at least once left a full previous session transcript behind — up to
+  `LOG_MAX_BYTES` (5 MiB by default) — unreachable through the CLI because the job dir
+  was already gone. Thanks to @vinhnguyenthanhdn (#35).
 - A rotating log no longer cuts the run that rotates it in half. Rotation ran after the
   jitter block had already logged its wake-up line and after the precheck had appended its
   output, so those lines ended up as the last thing in `<job>.log.1` while the surviving log

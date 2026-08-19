@@ -16,6 +16,16 @@ export const jobFile = (name) => join(jobDir(name), 'job.json')
 export const promptFile = (name) => join(jobDir(name), 'prompt.md')
 export const runnerFile = (name) => join(jobDir(name), 'run.sh')
 export const logFile = (name) => join(logsDir(), `${name}.log`)
+/**
+ * The previous generation of a job's log, after the runner rotated it.
+ *
+ * The generated runner (`templates/run.sh`) keeps one generation of rollover
+ * and names it `$LOG.1` — the `.1` suffix exists only as a string inside that
+ * template. Exporting it here gives the JS side a single source of truth for
+ * the name, so anything that must also touch the rotated log (like
+ * `uninstall --purge`) does not spell the suffix out a second time.
+ */
+export const rotatedLogFile = (name) => join(logsDir(), `${name}.log.1`)
 export const summaryFile = (name) => join(stateDir(), `${name}-summary.md`)
 
 export function ensureDirs() {
