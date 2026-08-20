@@ -35,7 +35,7 @@
   },
   "scripts": {
     "test": "node --test",
-    "check": "node --check bin/claude-jobs.js && node --check src/cli.js"
+    "check": "node scripts/syntax-check.mjs"
   },
   "repository": {
     "type": "git",

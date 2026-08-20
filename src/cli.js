@@ -44,9 +44,10 @@ init options:
 Docs: https://github.com/vinhnguyenthanhdn/claude-jobs
 `
 
-// Every flag in the `init options` block of USAGE that takes a value. One list,
-// because two lists that can drift is the same bug in a different shape (#16).
-const INIT_VALUE_FLAGS = new Set([
+// Every flag in the `init options` block of USAGE that takes a value. The suite
+// parses that block and asserts equality in both directions, so a flag added to
+// either side and not the other turns the tests red (#16, #36).
+export const INIT_VALUE_FLAGS = new Set([
   'skill',
   'task',
   'prompt-file',
@@ -62,6 +63,22 @@ const INIT_VALUE_FLAGS = new Set([
   'notify',
   'path',
 ])
+
+/**
+ * Value flags documented in the `init options` block of USAGE itself, parsed
+ * from live text rather than re-typed, so the docs are the source of truth.
+ * Slices from the `init options:` line to the next blank-line-then-unindented
+ * line and matches the `--flag <value>` shape.
+ */
+export function initValueFlagsFromUsage() {
+  const match = USAGE.match(/init options:([\s\S]*?)\n\n\S/)
+  if (!match) throw new Error('USAGE lost its `init options` block')
+  const parsed = new Set()
+  for (const flag of match[1].matchAll(/^\s+--([a-z-]+) </gm)) {
+    parsed.add(flag[1])
+  }
+  return parsed
+}
 
 export function parseArgs(argv) {
   const args = []
