@@ -7,7 +7,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { renderTemplate } from '../src/render.js'
 import { schedulerVars } from '../src/schedulers.js'
-import { INIT_VALUE_FLAGS } from '../src/cli.js'
+import { INIT_VALUE_FLAGS, initValueFlagsFromUsage } from '../src/cli.js'
 
 const CLI = fileURLToPath(new URL('../bin/claude-jobs.js', import.meta.url))
 
@@ -136,6 +136,18 @@ test('a value flag with no value is rejected by name and writes nothing (#16)', 
       assert.equal(existsSync(join(home, 'jobs', name)), false)
     })
   }
+})
+
+test('USAGE documents exactly the value flags the parser enforces, in both directions (#36)', () => {
+  const documented = initValueFlagsFromUsage()
+  assert.deepEqual(
+    [...documented].sort(),
+    [...INIT_VALUE_FLAGS].sort(),
+    '`init options` block of USAGE and INIT_VALUE_FLAGS must agree',
+  )
+  // Removing a flag from INIT_VALUE_FLAGS alone (the #16 shape, one level up)
+  // leaves USAGE still documenting it and this assert goes red.
+  assert.equal(INIT_VALUE_FLAGS.size, documented.size)
 })
 
 test('boolean flags are unaffected by the value-flag rule (#16)', () => {
