@@ -6,6 +6,19 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Fixed
 
+- `npm run check` now syntax-checks every tracked `.js`/`.mjs` file instead of the two it
+  named by hand. Sixteen of eighteen files were checked only if some test happened to
+  import them, and two were checked by nothing at all — including `src/index.js`, the
+  published entry point, so a file that did not parse could pass `check`, pass the tests,
+  pass `npm pack` and reach the registry. The new check refuses to report success for a
+  scan that found no files. Thanks to @Battleplus (#40).
+- The public surface of `src/index.js` is now pinned by a test that fails in both
+  directions, so a re-export that stops resolving is caught before a consumer finds it.
+  Thanks to @Battleplus (#40).
+- The `--init` value-flag list no longer exists in two places that can drift. Both the
+  parser and its regression test now read the `init options` block of `USAGE`, which had
+  already fallen one flag behind. An undocumented value flag is now impossible to ship.
+  Thanks to @Battleplus (#36).
 - `uninstall --purge` now also removes the rotated log (`<job>.log.1`). A job that had
   rotated at least once left a full previous session transcript behind — up to
   `LOG_MAX_BYTES` (5 MiB by default) — unreachable through the CLI because the job dir

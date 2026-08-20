@@ -18,8 +18,7 @@
  * what is actually shipped, not whatever happens to sit in the worktree).
  */
 
-import { execFileSync } from 'node:child_process'
-import { spawnSync } from 'node:child_process'
+import { execFileSync, spawnSync } from 'node:child_process'
 
 const tracked = execFileSync('git', ['ls-files'], {encoding: 'utf8'})
   .trim()
