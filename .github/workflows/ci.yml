@@ -48,3 +48,21 @@ jobs:
       # Catches the classic release bug: a file that works locally but was
       # never listed in package.json "files".
       - run: npm pack --dry-run
+
+  systemd-probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Does this runner have a usable user systemd session?
+        run: |
+          echo "whoami=$(whoami) uid=$(id -u)"
+          echo "XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-<unset>}"
+          echo "DBUS_SESSION_BUS_ADDRESS=${DBUS_SESSION_BUS_ADDRESS:-<unset>}"
+          echo "pid1=$(ps -p 1 -o comm=)"
+          loginctl show-user "$(whoami)" 2>&1 | head -5 || true
+          echo "--- systemctl --user status"
+          systemctl --user status >/dev/null 2>&1 && echo "USER_SESSION=yes" || echo "USER_SESSION=no (exit $?)"
+          echo "--- after enable-linger"
+          sudo loginctl enable-linger "$(whoami)" 2>&1 || true
+          export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+          systemctl --user status >/dev/null 2>&1 && echo "USER_SESSION_LINGER=yes" || echo "USER_SESSION_LINGER=no (exit $?)"
+          systemctl --user list-timers --all 2>&1 | head -5 || true
