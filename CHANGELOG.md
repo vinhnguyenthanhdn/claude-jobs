@@ -4,6 +4,16 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- `scripts/syntax-check.mjs` exports `findScripts`, `checkSyntax` and `main`, and only
+  runs the scan when it is the process entry point. The gate was previously a top-level
+  script, so nothing could reach its parts to test them: narrowing its file filter to a
+  single directory left the whole suite green while a file that did not parse passed both
+  `npm run check` and `npm test`. The entry-point comparison uses
+  `pathToFileURL(process.argv[1])` rather than a `file://` template, which never matches
+  on Windows and would leave the gate exiting 0 having run nothing (#42).
+
 ### Fixed
 
 - `npm run check` now syntax-checks every tracked `.js`/`.mjs` file instead of the two it
