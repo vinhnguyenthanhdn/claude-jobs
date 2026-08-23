@@ -124,7 +124,7 @@ export function install(job) {
       stdio: 'inherit',
     })
   } else if (scheduler === 'cron') {
-    writeCrontab(`${crontabWithout(currentCrontab(), name)}\n${cronLine(job)}`)
+    writeCrontab(crontabWithout(currentCrontab(), name))
   }
 
   return created
