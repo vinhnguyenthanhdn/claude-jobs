@@ -39,3 +39,17 @@ test('src/index.js exports nothing unexpected (#40)', () => {
   const expected = [...EXPECTED_EXPORTS].sort()
   assert.deepEqual(actual, expected)
 })
+
+test('every published name resolves to something callable (#42)', () => {
+  // `name in entry` and `Object.keys(entry)` both pass on a name bound to
+  // undefined -- which is exactly what a re-export of a since-renamed symbol
+  // looks like from outside the package. The two tests above therefore cannot
+  // tell "re-exported" from "re-exported as nothing"; this one can.
+  for (const name of EXPECTED_EXPORTS) {
+    assert.equal(
+      typeof entry[name],
+      'function',
+      `index.js re-exports "${name}", but it does not resolve to a function`,
+    )
+  }
+})
