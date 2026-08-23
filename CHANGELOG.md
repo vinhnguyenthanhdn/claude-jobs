@@ -13,6 +13,11 @@ All notable changes to this project are documented here. Format follows [Keep a 
   files being written rather than on any scheduler having accepted them. Removing the
   `systemctl --user enable --now` call turns this job red while all 58 tests stay green on
   all six matrix legs.
+- CI also hands a real line to `crontab` on a Linux runner and reads it back from cron's
+  own store, starting from an empty crontab so the readback cannot be satisfied by
+  something already there. The schedule is asserted, not just the line: `--at 04:07` must
+  come back as `7 4 * * *`. cron had been covered only as string functions over crontab
+  text, so dropping the write from `install` left all 58 tests green.
 
 ### Changed
 

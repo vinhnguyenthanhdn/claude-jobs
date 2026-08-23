@@ -106,3 +106,55 @@ jobs:
           fi
           test ! -e "$HOME/.config/systemd/user/claude-jobs-$JOB.timer"
           test ! -e "$HOME/.config/systemd/user/claude-jobs-$JOB.service"
+
+  # The README also claims cron "where either is missing". cron was covered only
+  # at the pure-function level — `crontabHas`/`crontabWithout` over strings — so
+  # nothing had ever handed a line to `crontab` and read it back. This job does,
+  # on the same runner, and it starts from an empty crontab so the readback
+  # cannot be satisfied by something that was already there.
+  cron:
+    runs-on: ubuntu-latest
+    env:
+      JOB: ci-cron-gate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: The runner must have a usable crontab
+        run: |
+          printf '' | crontab -
+          crontab -l 2>/dev/null || true
+
+      - name: Hand a line to crontab, read it back, then remove it
+        run: |
+          set -euo pipefail
+          npm install -g .
+
+          claude-jobs init "$JOB" \
+            --task "syntax placeholder; this job is never run" \
+            --at 04:07 --jitter 0 --scheduler cron --workdir "$PWD"
+
+          # Negative evidence: the readback below must be able to find nothing.
+          if crontab -l 2>/dev/null | grep -q "claude-jobs:$JOB"; then
+            echo "::error::the marker was in the crontab before install ran"
+            exit 1
+          fi
+
+          claude-jobs install "$JOB"
+
+          # Ask cron's own store, not a file this tool wrote.
+          crontab -l > installed.txt
+          echo "--- crontab after install:"
+          cat installed.txt
+          grep -q "# claude-jobs:$JOB\$" installed.txt
+          # The schedule is the claim: --at 04:07 must survive as "7 4 * * *".
+          grep -qE "^7 4 \* \* \* " installed.txt
+          grep -q "claude-jobs/jobs/$JOB/run.sh" installed.txt
+
+          claude-jobs uninstall "$JOB"
+          if crontab -l 2>/dev/null | grep -q "claude-jobs:$JOB"; then
+            echo "::error::the line survived uninstall"
+            exit 1
+          fi
