@@ -4,6 +4,16 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- CI registers a real systemd user timer on a Linux runner and reads it back from the
+  scheduler — absent before `install`, then listed, `enabled`, `active`, carrying the
+  `--at` value, and gone from both systemd and disk after `uninstall`. `systemd` appeared
+  nowhere in the test suite before this, so the README's Linux claim rested on the unit
+  files being written rather than on any scheduler having accepted them. Removing the
+  `systemctl --user enable --now` call turns this job red while all 58 tests stay green on
+  all six matrix legs.
+
 ### Changed
 
 - `scripts/syntax-check.mjs` exports `findScripts`, `checkSyntax` and `main`, and only

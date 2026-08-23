@@ -48,3 +48,61 @@ jobs:
       # Catches the classic release bug: a file that works locally but was
       # never listed in package.json "files".
       - run: npm pack --dry-run
+
+  # The README claims "systemd user timers on Linux". Every other leg only
+  # proves the Node code runs; nothing here had ever handed a unit to systemd
+  # and read it back, so the claim had no evidence behind it. This job registers
+  # a real timer on the runner's own user manager, asks systemd about it, and
+  # removes it again.
+  systemd:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      # If the runner image ever stops giving the job a user manager, every
+      # assertion below would pass vacuously. Fail here instead, loudly.
+      - name: The runner must have a usable user systemd session
+        run: |
+          systemctl --user status >/dev/null
+          echo "user manager: $(systemctl --user show -p Version --value)"
+
+      - name: Register a timer with systemd, read it back, then remove it
+        env:
+          JOB: ci-systemd-gate
+        run: |
+          set -euo pipefail
+          npm install -g .
+
+          claude-jobs init "$JOB" \
+            --task "syntax placeholder; this job is never run" \
+            --at 04:00 --jitter 0 --scheduler systemd --workdir "$PWD"
+
+          # Negative evidence: the grep below must be able to find nothing.
+          # Without this, a permanently-matching pattern would pass forever.
+          if systemctl --user list-timers --all --no-legend | grep -q "claude-jobs-$JOB.timer"; then
+            echo "::error::timer was already registered before install ran"
+            exit 1
+          fi
+
+          claude-jobs install "$JOB"
+
+          # Ask systemd, not the filesystem. `init` writes the unit file, so a
+          # file existing proves only that a file was written.
+          systemctl --user list-timers --all --no-legend | grep "claude-jobs-$JOB.timer"
+          test "$(systemctl --user is-enabled "claude-jobs-$JOB.timer")" = enabled
+          test "$(systemctl --user is-active "claude-jobs-$JOB.timer")" = active
+          test "$(systemctl --user show -p Persistent --value "claude-jobs-$JOB.timer")" = yes
+          systemctl --user show -p TimersCalendar --value "claude-jobs-$JOB.timer" \
+            | grep -q 'OnCalendar=\*-\*-\* 04:00:00'
+
+          claude-jobs uninstall "$JOB"
+
+          if systemctl --user list-timers --all --no-legend | grep -q "claude-jobs-$JOB.timer"; then
+            echo "::error::timer survived uninstall"
+            exit 1
+          fi
+          test ! -e "$HOME/.config/systemd/user/claude-jobs-$JOB.timer"
+          test ! -e "$HOME/.config/systemd/user/claude-jobs-$JOB.service"
