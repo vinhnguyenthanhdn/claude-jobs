@@ -120,9 +120,6 @@ export function install(job) {
     execFileSync('launchctl', ['load', path], { stdio: 'inherit' })
   } else if (scheduler === 'systemd') {
     execFileSync('systemctl', ['--user', 'daemon-reload'], { stdio: 'inherit' })
-    execFileSync('systemctl', ['--user', 'enable', '--now', `claude-jobs-${name}.timer`], {
-      stdio: 'inherit',
-    })
   } else if (scheduler === 'cron') {
     writeCrontab(`${crontabWithout(currentCrontab(), name)}\n${cronLine(job)}`)
   }
