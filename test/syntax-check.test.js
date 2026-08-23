@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { execFileSync, spawnSync } from 'node:child_process'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
@@ -33,9 +33,24 @@ test('findScripts reaches the two files the old hand-written check missed', () =
   )
 })
 
-test('findScripts skips node_modules', () => {
-  const found = findScripts(repoRoot)
+test('findScripts skips node_modules', (t) => {
+  // Asserted against a repository that actually tracks a file under
+  // `node_modules`, not against this one: here the directory is gitignored, so
+  // `git ls-files` never offers it and the assertion holds with the filter
+  // deleted. A vendored dependency committed on purpose is the case the filter
+  // exists for, and the only one that can observe it.
+  const vendored = mkdtempSync(path.join(tmpdir(), 'claude-jobs-vendored-'))
+  t.after(() => rmSync(vendored, {recursive: true, force: true}))
 
+  execFileSync('git', ['init', '--quiet'], {cwd: vendored})
+  mkdirSync(path.join(vendored, 'node_modules', 'left-pad'), {recursive: true})
+  writeFileSync(path.join(vendored, 'node_modules', 'left-pad', 'index.js'), 'export default 1\n')
+  writeFileSync(path.join(vendored, 'own.js'), 'export default 2\n')
+  execFileSync('git', ['add', '--force', '.'], {cwd: vendored})
+
+  const found = findScripts(vendored)
+
+  assert.ok(found.includes('own.js'), 'the repository\'s own script is not discovered')
   assert.deepEqual(
     found.filter((file) => file.split('/').includes('node_modules')),
     [],
