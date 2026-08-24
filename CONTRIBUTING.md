@@ -8,8 +8,11 @@ Thanks for looking. This project is small on purpose, and the bar for a change i
 git clone https://github.com/vinhnguyenthanhdn/claude-jobs
 cd claude-jobs
 npm test          # no dependencies to install — Node's built-in test runner
+npm run check     # the syntax gate CI runs; every tracked .js and .mjs must parse
 node bin/claude-jobs.js help
 ```
+
+Both commands run in CI on every push, so a green pair here is a green pair there. `npm test` alone is not enough: `npm run check` is the gate a newly added script trips first, and it is discovered from `git ls-files` rather than a list, so a file added today is covered today.
 
 Try your change end to end without touching your real jobs:
 
