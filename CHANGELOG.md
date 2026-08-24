@@ -4,6 +4,13 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- `CONTRIBUTING.md` names `npm run check` alongside `npm test` in the setup block. CI runs
+  both on every push; the documented pre-pull-request command was only the first, so a
+  contributor could follow this file exactly and never run the gate a newly added script
+  trips first.
+
 ### Added
 
 - CI registers a real systemd user timer on a Linux runner and reads it back from the
