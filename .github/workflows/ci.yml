@@ -158,3 +158,56 @@ jobs:
             echo "::error::the line survived uninstall"
             exit 1
           fi
+
+  # The README also promises launchd on macOS, but a plist on disk proves only
+  # that a file was written. This job asks the user's GUI launchd domain to
+  # accept the job, checks the registered path and calendar, then removes it.
+  launchd:
+    runs-on: macos-latest
+    env:
+      JOB: ci-launchd-gate
+      LABEL: com.claude-jobs.ci-launchd-gate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: The runner must have a usable GUI launchd domain
+        run: |
+          set -euo pipefail
+          launchctl print "gui/$(id -u)" >/dev/null
+
+      - name: Register a job with launchd, read it back, then remove it
+        run: |
+          set -euo pipefail
+          npm install -g .
+
+          claude-jobs init "$JOB" \
+            --task "syntax placeholder; this job is never run" \
+            --at 04:11 --jitter 0 --scheduler launchd --workdir "$PWD"
+
+          # Negative evidence: the label must not already be loaded. Otherwise
+          # a stale job could satisfy every assertion after install is removed.
+          if launchctl print "gui/$(id -u)/$LABEL" >/dev/null 2>&1; then
+            echo "::error::launchd label was already registered before install ran"
+            exit 1
+          fi
+
+          claude-jobs install "$JOB"
+
+          # Ask launchd, not the plist on disk. The registered state must carry
+          # both the generated runner and the requested calendar interval.
+          launchd_state="$(launchctl print "gui/$(id -u)/$LABEL")"
+          printf '%s\n' "$launchd_state"
+          grep -Fq "$HOME/.claude-jobs/jobs/$JOB/run.sh" <<<"$launchd_state"
+          grep -Fq 'Hour = 4' <<<"$launchd_state"
+          grep -Fq 'Minute = 11' <<<"$launchd_state"
+
+          claude-jobs uninstall "$JOB"
+
+          if launchctl print "gui/$(id -u)/$LABEL" >/dev/null 2>&1; then
+            echo "::error::launchd label survived uninstall"
+            exit 1
+          fi
+          test ! -e "$HOME/Library/LaunchAgents/$LABEL.plist"
