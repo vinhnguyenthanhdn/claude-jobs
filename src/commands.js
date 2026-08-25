@@ -282,10 +282,11 @@ function describeAuth(text) {
   try {
     const info = JSON.parse(text)
     if (!info.loggedIn) return 'not logged in — run "claude auth login"'
-    const who = [info.subscriptionType, info.email].filter(Boolean).join(', ')
-    return who ? `logged in (${who})` : 'logged in'
+    return info.subscriptionType ? `logged in (${info.subscriptionType})` : 'logged in'
   } catch {
-    return text.split('\n')[0]
+    return text
+      .split('\n')[0]
+      .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[email redacted]')
   }
 }
 

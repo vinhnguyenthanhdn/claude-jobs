@@ -1,6 +1,6 @@
 {
   "name": "claude-jobs",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Scheduled, unattended Claude Code CLI jobs. Runs on your Claude subscription via the local CLI — no ANTHROPIC_API_KEY.",
   "keywords": [
     "claude",

@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.1.7] — 2026-08-25
+
 ### Changed
 
 - `CONTRIBUTING.md` names `npm run check` alongside `npm test` in the setup block. CI runs
@@ -38,6 +40,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Fixed
 
+- `claude-jobs doctor` no longer prints the account email returned by `claude auth status`.
+  The bug-report form requires this diagnostic output, so copying it into a public issue
+  could publish account identity along with the useful login and subscription status. JSON
+  output now keeps only the subscription type; legacy prose has email-shaped values redacted.
 - `npm run check` now syntax-checks every tracked `.js`/`.mjs` file instead of the two it
   named by hand. Sixteen of eighteen files were checked only if some test happened to
   import them, and two were checked by nothing at all — including `src/index.js`, the

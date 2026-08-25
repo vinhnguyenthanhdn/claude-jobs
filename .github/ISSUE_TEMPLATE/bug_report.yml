@@ -13,6 +13,7 @@ body:
     id: doctor
     attributes:
       label: Output of `claude-jobs doctor`
+      description: Current versions omit account email. If an older install shows one, redact it before submitting.
       render: shell
     validations:
       required: true
