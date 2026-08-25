@@ -201,8 +201,8 @@ jobs:
           launchd_state="$(launchctl print "gui/$(id -u)/$LABEL")"
           printf '%s\n' "$launchd_state"
           grep -Fq "$HOME/.claude-jobs/jobs/$JOB/run.sh" <<<"$launchd_state"
-          grep -Fq 'Hour = 4' <<<"$launchd_state"
-          grep -Fq 'Minute = 11' <<<"$launchd_state"
+          grep -Fq '"Hour" => 4' <<<"$launchd_state"
+          grep -Fq '"Minute" => 11' <<<"$launchd_state"
 
           claude-jobs uninstall "$JOB"
 
