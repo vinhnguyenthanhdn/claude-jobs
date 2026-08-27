@@ -30,7 +30,7 @@ Claude Code also schedules work by itself now, in three different places. Read [
 
 ```bash
 npm install -g claude-jobs   # or just use npx claude-jobs
-claude-jobs doctor           # safe-to-paste checks; account email is redacted
+claude-jobs doctor           # safe-to-paste checks + a direct bug-report form link
 ```
 
 Requires Node 18.17+, Claude Code installed and logged in (`claude auth login`) **as the same user that will run the jobs**.
@@ -61,7 +61,7 @@ What it does **not** do is migrate `job.json`. A field added after your job was 
 | `install` / `uninstall <name>` | Register / unregister with launchd, systemd or cron |
 | `logs <name> [--lines N]` | Tail the job log |
 | `status <name>` | Schedule, paths, and the last summary the agent wrote |
-| `doctor` | Safe-to-paste binary, login, API-key leakage and scheduler checks; account email is redacted |
+| `doctor` | Safe-to-paste binary, login, API-key leakage and scheduler checks; account email is redacted and the last line opens the structured bug-report form |
 
 Useful `init` flags: `--skill`, `--task`, `--prompt-file`, `--at HH:MM`, `--jitter`, `--workdir`, `--scheduler`, `--model`, `--precheck`, `--notify`, `--permission-mode`. Run `claude-jobs help` for the full list.
 

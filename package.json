@@ -42,7 +42,7 @@
     "url": "git+https://github.com/vinhnguyenthanhdn/claude-jobs.git"
   },
   "bugs": {
-    "url": "https://github.com/vinhnguyenthanhdn/claude-jobs/issues"
+    "url": "https://github.com/vinhnguyenthanhdn/claude-jobs/issues/new?template=bug_report.yml"
   },
   "homepage": "https://github.com/vinhnguyenthanhdn/claude-jobs#readme",
   "publishConfig": {

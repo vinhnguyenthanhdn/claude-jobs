@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { execFileSync } from 'node:child_process'
-import { chmodSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const CLI = fileURLToPath(new URL('../bin/claude-jobs.js', import.meta.url))
+const PACKAGE = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
 
 function runDoctor(authOutput) {
   const scratch = mkdtempSync(join(tmpdir(), 'claude-jobs-doctor-'))
@@ -44,4 +45,13 @@ test('doctor redacts an email in legacy prose auth status', () => {
 
   assert.match(out, /claude auth: Logged in as \[email redacted\]/)
   assert.doesNotMatch(out, /person@example\.test/)
+})
+
+test('doctor and npm metadata route users to the structured bug-report form', () => {
+  const out = runDoctor(JSON.stringify({ loggedIn: true, subscriptionType: 'team' }))
+  const expected =
+    'https://github.com/vinhnguyenthanhdn/claude-jobs/issues/new?template=bug_report.yml'
+
+  assert.equal(PACKAGE.bugs.url, expected)
+  assert.match(out, new RegExp(`Report a problem: ${expected.replace(/[.?]/g, '\\$&')}`))
 })

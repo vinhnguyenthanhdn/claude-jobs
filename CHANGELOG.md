@@ -4,6 +4,13 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- `claude-jobs doctor` now ends with a direct link to the structured bug-report form,
+  and the npm package's `bugs` link uses the same route. The diagnostic was already
+  safe to paste and required by that form, but users still had to find the repository,
+  open Issues, and select the right template before they could report what they saw.
+
 ## [0.1.7] — 2026-08-25
 
 ### Changed

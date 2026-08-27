@@ -28,6 +28,8 @@ import {
 } from './schedulers.js'
 
 const DEFAULT_PATH = '/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin'
+const BUG_REPORT_URL =
+  'https://github.com/vinhnguyenthanhdn/claude-jobs/issues/new?template=bug_report.yml'
 
 function findClaudeBinary() {
   const found = spawnSync('/bin/sh', ['-c', 'command -v claude'], { encoding: 'utf8' })
@@ -315,4 +317,6 @@ export function cmdDoctor() {
     console.log('')
     console.log('Fix: install Claude Code, then run "claude auth login" as the same user that runs the jobs.')
   }
+  console.log('')
+  console.log(`Report a problem: ${BUG_REPORT_URL}`)
 }
