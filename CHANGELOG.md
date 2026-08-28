@@ -6,6 +6,14 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- `docs/`, `examples/` and `CONTRIBUTING.md` ship in the package. The README is
+  packed and links to all of them, including `docs/policy.md` - the statement of
+  what this does not do - so anyone reading the installed copy was following
+  relative paths that exist on GitHub and nowhere on their disk. A test now asserts
+  the property rather than the list: every relative link in the packaged README has
+  to resolve inside the tarball, so the next document added is either shipped or
+  the check says which one is missing. It was red on all seven before this change.
+
 - Coverage for `init --skill`, the flag the first command in the README leads with.
   The only assertion the suite made about it was that a missing file is refused; the
   path that decides what a scheduled run reads had none. The new tests pin that the
