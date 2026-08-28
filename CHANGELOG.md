@@ -6,6 +6,15 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- Coverage for `init --skill`, the flag the first command in the README leads with.
+  The only assertion the suite made about it was that a missing file is refused; the
+  path that decides what a scheduled run reads had none. The new tests pin that the
+  path is resolved against the directory `init` ran in - a relative path breaks the
+  moment the scheduler starts the job from somewhere else - that the resolved path
+  reaches `job.json`, `prompt.md` and the `--dry-run` plan, and that `--task` still
+  wins when both are given. Both are verified by mutation: dropping `resolve()` and
+  reversing the precedence each turn exactly one of them red.
+
 - `claude-jobs doctor` now ends with a direct link to the structured bug-report form,
   and the npm package's `bugs` link uses the same route. The diagnostic was already
   safe to paste and required by that form, but users still had to find the repository,

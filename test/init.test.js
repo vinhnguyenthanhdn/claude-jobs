@@ -20,9 +20,10 @@ function withHome(fn) {
   }
 }
 
-function cli(home, args) {
+function cli(home, args, cwd) {
   return execFileSync(process.execPath, [CLI, ...args], {
     encoding: 'utf8',
+    cwd,
     env: { ...process.env, CLAUDE_JOBS_HOME: home, CLAUDE_JOBS_SCHEDULER: 'cron' },
   })
 }
@@ -46,6 +47,61 @@ test('init scaffolds a runnable job and dry-run explains it without calling clau
     assert.match(dry, /--permission-mode bypassPermissions/)
     assert.match(dry, /--output-format stream-json/)
     assert.match(dry, /Do the thing\./)
+  })
+})
+
+// --skill is the flag the first command block in the README leads with, and the
+// only thing that had ever been asserted about it was its refusal branch. The
+// happy path decides what the scheduled run actually reads: the path is resolved
+// against the directory `init` ran in, not against the workdir the job later uses,
+// so a relative path that works when typed has to survive as an absolute one.
+test('init --skill resolves the path it was given and carries it into the plan', () => {
+  withHome((home) => {
+    const project = mkdtempSync(join(tmpdir(), 'claude-jobs-project-'))
+    try {
+      const skill = join(project, 'playbook.md')
+      writeFileSync(skill, '# Morning report\n\nRead the inbox and summarise it.\n')
+
+      cli(home, ['init', 'skilled', '--skill', './playbook.md', '--at', '09:30', '--jitter', '0'], project)
+
+      const job = JSON.parse(readFileSync(join(home, 'jobs', 'skilled', 'job.json'), 'utf8'))
+      assert.ok(
+        job.task.includes(skill),
+        `the job task should name the resolved skill file, got: ${job.task}`,
+      )
+      assert.ok(
+        !job.task.includes('./playbook.md'),
+        'a relative path would break as soon as the scheduler runs the job from elsewhere',
+      )
+
+      const prompt = readFileSync(join(home, 'jobs', 'skilled', 'prompt.md'), 'utf8')
+      assert.ok(prompt.includes(skill), 'the generated prompt should point at the skill file')
+
+      // The dry run is the middle line of the README quick start: what the user
+      // reads before handing anything to the scheduler.
+      const dry = cli(home, ['run', 'skilled', '--dry-run'], project)
+      assert.ok(dry.includes(skill), 'the dry-run plan should show the skill file it will read')
+    } finally {
+      rmSync(project, { recursive: true, force: true })
+    }
+  })
+})
+
+test('--task wins over --skill when both are given', () => {
+  withHome((home) => {
+    const project = mkdtempSync(join(tmpdir(), 'claude-jobs-project-'))
+    try {
+      const skill = join(project, 'playbook.md')
+      writeFileSync(skill, '# unused\n')
+
+      cli(home, ['init', 'both', '--task', 'Inline task.', '--skill', './playbook.md', '--jitter', '0'], project)
+
+      const job = JSON.parse(readFileSync(join(home, 'jobs', 'both', 'job.json'), 'utf8'))
+      assert.equal(job.task, 'Inline task.')
+      assert.ok(!job.task.includes(skill), 'the skill file should not leak into an inline task')
+    } finally {
+      rmSync(project, { recursive: true, force: true })
+    }
   })
 })
 
