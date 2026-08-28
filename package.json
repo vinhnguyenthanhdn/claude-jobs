@@ -27,7 +27,10 @@
     "bin",
     "src",
     "templates",
+    "docs",
+    "examples",
     "README.md",
+    "CONTRIBUTING.md",
     "LICENSE"
   ],
   "engines": {
