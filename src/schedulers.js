@@ -1,5 +1,5 @@
 import { execFileSync, execSync } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir, platform } from 'node:os'
 import { join } from 'node:path'
 import { renderTemplate } from './render.js'
@@ -205,6 +205,3 @@ export function schedulerFilesFor(job) {
   return []
 }
 
-export function readSchedulerFile(path) {
-  return existsSync(path) ? readFileSync(path, 'utf8') : null
-}
