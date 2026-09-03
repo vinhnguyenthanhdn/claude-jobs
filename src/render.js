@@ -1,3 +1,4 @@
+import { UsageError } from './errors.js'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
@@ -8,7 +9,7 @@ import { fileURLToPath } from 'node:url'
  */
 export function render(template, vars) {
   return template.replace(/\{\{([A-Z0-9_]+)\}\}/g, (_match, token) => {
-    if (!(token in vars)) throw new Error(`template placeholder {{${token}}} has no value`)
+    if (!(token in vars)) throw new UsageError(`template placeholder {{${token}}} has no value`)
     return String(vars[token])
   })
 }

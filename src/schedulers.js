@@ -1,3 +1,4 @@
+import { UsageError } from './errors.js'
 import { execFileSync, execSync } from 'node:child_process'
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir, platform } from 'node:os'
@@ -16,13 +17,13 @@ export function defaultScheduler() {
 
 export function assertValidScheduler(scheduler) {
   if (scheduler !== 'launchd' && scheduler !== 'systemd' && scheduler !== 'cron') {
-    throw new Error(`unknown scheduler "${scheduler}". Use launchd, systemd or cron.`)
+    throw new UsageError(`unknown scheduler "${scheduler}". Use launchd, systemd or cron.`)
   }
 }
 
 export function parseTime(value) {
   const match = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(String(value).trim())
-  if (!match) throw new Error(`invalid --at "${value}". Use 24-hour HH:MM, e.g. 09:30.`)
+  if (!match) throw new UsageError(`invalid --at "${value}". Use 24-hour HH:MM, e.g. 09:30.`)
   return { hour: Number(match[1]), minute: Number(match[2]) }
 }
 

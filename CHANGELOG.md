@@ -6,6 +6,20 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- An unexpected failure now says where to report it. Until now everything that
+  escaped a command printed one bare line - `claude-jobs: Expected property name
+  or '}' in JSON at position 1` named no file, no job and no place to go, so it
+  produced a shrug rather than an issue. Failures are now split: a mistake in what
+  you passed keeps its single actionable line, and anything unanticipated prints
+  `claude-jobs doctor` plus the bug-report form, with `CLAUDE_JOBS_DEBUG=1` for the
+  stack trace. A broken `job.json` stopped being one of the unanticipated ones - it
+  names the file and how to get out of it.
+
+  The split is what makes the footer correct, so a test asserts the property that
+  no shipped module throws an untyped error: a plain `new Error` added later would
+  tell a user to file a bug about their own typo, and its message would still read
+  fine on its own.
+
 - `docs/`, `examples/` and `CONTRIBUTING.md` ship in the package. The README is
   packed and links to all of them, including `docs/policy.md` - the statement of
   what this does not do - so anyone reading the installed copy was following

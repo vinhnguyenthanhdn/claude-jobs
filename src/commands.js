@@ -1,3 +1,4 @@
+import { BUG_REPORT_URL, UsageError } from './errors.js'
 import { execFileSync, spawnSync } from 'node:child_process'
 import { chmodSync, existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -28,8 +29,6 @@ import {
 } from './schedulers.js'
 
 const DEFAULT_PATH = '/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin'
-const BUG_REPORT_URL =
-  'https://github.com/vinhnguyenthanhdn/claude-jobs/issues/new?template=bug_report.yml'
 
 function findClaudeBinary() {
   const found = spawnSync('/bin/sh', ['-c', 'command -v claude'], { encoding: 'utf8' })
@@ -125,11 +124,11 @@ export function buildJob(name, flags) {
 export function cmdInit(args, flags) {
   const name = assertValidName(args[0] || '')
   if (existsSync(jobDir(name)) && !flags.force) {
-    throw new Error(`job "${name}" already exists. Pass --force to overwrite it.`)
+    throw new UsageError(`job "${name}" already exists. Pass --force to overwrite it.`)
   }
   if (flags.jitter !== undefined) {
     if (typeof flags.jitter === 'boolean' || !/^\d+$/.test(String(flags.jitter))) {
-      throw new Error(`--jitter must be a non-negative integer. Received "${flags.jitter}".`)
+      throw new UsageError(`--jitter must be a non-negative integer. Received "${flags.jitter}".`)
     }
   }
   if (flags['log-max-bytes'] !== undefined) {
@@ -137,19 +136,19 @@ export function cmdInit(args, flags) {
       typeof flags['log-max-bytes'] === 'boolean' ||
       !/^\d+$/.test(String(flags['log-max-bytes']))
     ) {
-      throw new Error(
+      throw new UsageError(
         `--log-max-bytes must be a non-negative integer. Received "${flags['log-max-bytes']}".`,
       )
     }
   }
   if (flags.skill !== undefined) {
     if (typeof flags.skill === 'boolean' || !existsSync(resolve(flags.skill))) {
-      throw new Error(`--skill file not found: "${flags.skill}".`)
+      throw new UsageError(`--skill file not found: "${flags.skill}".`)
     }
   }
   if (flags['prompt-file'] !== undefined) {
     if (typeof flags['prompt-file'] === 'boolean' || !existsSync(resolve(flags['prompt-file']))) {
-      throw new Error(`--prompt-file not found: "${flags['prompt-file']}".`)
+      throw new UsageError(`--prompt-file not found: "${flags['prompt-file']}".`)
     }
   }
   const job = buildJob(name, flags)

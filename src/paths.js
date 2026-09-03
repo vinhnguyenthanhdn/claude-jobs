@@ -1,3 +1,4 @@
+import { UsageError } from './errors.js'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -44,9 +45,22 @@ export function listJobNames() {
 
 export function readJob(name) {
   if (!existsSync(jobFile(name))) {
-    throw new Error(`job "${name}" not found. Run "claude-jobs list" to see what exists.`)
+    throw new UsageError(`job "${name}" not found. Run "claude-jobs list" to see what exists.`)
   }
-  return JSON.parse(readFileSync(jobFile(name), 'utf8'))
+  const path = jobFile(name)
+  const raw = readFileSync(path, 'utf8')
+  try {
+    return JSON.parse(raw)
+  } catch (err) {
+    // A JSON parse error on its own names neither the file nor the job — it
+    // arrives as `Expected property name or '}' at position 1` and reads like a
+    // bug in the tool. Say which file is broken and how to get out of it.
+    throw new UsageError(
+      `job "${name}" has an unreadable job.json: ${err.message}\n` +
+        `  file: ${path}\n` +
+        `  fix it by hand, or delete the job directory and run "claude-jobs init ${name}" again.`,
+    )
+  }
 }
 
 export function writeJob(name, job) {
@@ -60,7 +74,7 @@ export function writeJob(name, job) {
  */
 export function assertValidName(name) {
   if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(name)) {
-    throw new Error(
+    throw new UsageError(
       `invalid job name "${name}". Use lowercase letters, digits and dashes (max 64 chars).`,
     )
   }
