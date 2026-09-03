@@ -6,6 +6,22 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- `status` now says what the last run did. A scheduled job's second failure shape
+  raises nothing at all - the precheck refuses every morning, the binary moved,
+  the unit was never loaded - and `status` could not tell that apart from a healthy
+  job, because the only thing it printed from a run was the last summary, and a
+  summary from four days ago reads exactly like one from this morning. It now reads
+  the markers the runner already writes and reports one line: never fired, woke and
+  stopped, spent no session and which precondition refused, started without an exit,
+  or finished with its code. A summary older than the last session is called out
+  instead of being read as its report, and the summary carries the time it was
+  written. Nothing is collected or sent; every line already existed in the log.
+
+  Only the runner's own `[timestamp] ` prefix counts as a marker, since the session
+  transcript lands in the same file and contains arbitrary text. A test extracts the
+  markers from `templates/run.sh` and requires the reader to classify each one, so a
+  marker renamed on one side stops being silently unreadable on the other.
+
 - An unexpected failure now says where to report it. Until now everything that
   escaped a command printed one bare line - `claude-jobs: Expected property name
   or '}' in JSON at position 1` named no file, no job and no place to go, so it

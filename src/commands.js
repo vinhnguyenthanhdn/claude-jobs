@@ -1,8 +1,9 @@
 import { BUG_REPORT_URL, UsageError } from './errors.js'
 import { execFileSync, spawnSync } from 'node:child_process'
-import { chmodSync, existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { readTemplate, render, renderTemplate, shellQuote } from './render.js'
+import { describeLastRun } from './runlog.js'
 import {
   assertValidName,
   ensureDirs,
@@ -267,9 +268,18 @@ export function cmdStatus(args) {
   console.log(`claude     ${job.claudeBin}`)
   for (const path of schedulerFilesFor(job)) console.log(`unit       ${path}`)
   console.log(`log        ${logFile(job.name)}`)
+
+  const log = logFile(job.name)
+  const { lines } = describeLastRun({
+    logText: existsSync(log) ? readFileSync(log, 'utf8') : null,
+    summaryTime: existsSync(summary) ? statSync(summary).mtime : null,
+  })
+  console.log(`last run   ${lines[0]}`)
+  for (const extra of lines.slice(1)) console.log(extra)
+
   if (existsSync(summary)) {
     console.log('')
-    console.log('--- last summary ---')
+    console.log(`--- last summary (written ${statSync(summary).mtime.toISOString()}) ---`)
     console.log(readFileSync(summary, 'utf8').trim())
   }
 }

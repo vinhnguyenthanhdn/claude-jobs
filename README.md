@@ -60,7 +60,7 @@ What it does **not** do is migrate `job.json`. A field added after your job was 
 | `run <name> [--now\|--dry-run]` | Run by hand — `--dry-run` prints the plan and the prompt |
 | `install` / `uninstall <name>` | Register / unregister with launchd, systemd or cron |
 | `logs <name> [--lines N]` | Tail the job log |
-| `status <name>` | Schedule, paths, and the last summary the agent wrote |
+| `status <name>` | Schedule, paths, what the last run did, and the last summary the agent wrote with the time it was written |
 | `doctor` | Safe-to-paste binary, login, API-key leakage and scheduler checks; account email is redacted and the last line opens the structured bug-report form |
 
 Useful `init` flags: `--skill`, `--task`, `--prompt-file`, `--at HH:MM`, `--jitter`, `--workdir`, `--scheduler`, `--model`, `--precheck`, `--notify`, `--permission-mode`. Run `claude-jobs help` for the full list.
@@ -188,7 +188,16 @@ The [gist](https://gist.github.com/vinhnguyenthanhdn/09b7430e84ddf0fdc31acf3c578
 
 ## When something fails
 
-Failures are sorted into two kinds, because they need different things from you.
+A scheduled job has a second failure shape that never raises anything: it does nothing. The precheck refuses every morning, the `claude` binary moved, the unit was never loaded. `claude-jobs status <name>` answers that directly — it reads the log the run already wrote and says what the last run did:
+
+```
+last run   2026-09-03 09:08:40 — spent no session: precheck failed: git -C /repo pull
+  the summary below is older than this run — that run wrote none, so it is not its report
+```
+
+The second line is the case worth naming: a summary from four days ago reads exactly like one from this morning, so the report shown carries the time it was written.
+
+Failures that *do* raise something are sorted into two kinds, because they need different things from you.
 
 A mistake in what you passed prints one line naming the fix and stops there — a missing job name, an unknown scheduler, a `--skill` path that is not there. There is nothing to report.
 
