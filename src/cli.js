@@ -1,3 +1,4 @@
+import { UsageError } from './errors.js'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import {
@@ -72,7 +73,7 @@ export const INIT_VALUE_FLAGS = new Set([
  */
 export function initValueFlagsFromUsage() {
   const match = USAGE.match(/init options:([\s\S]*?)\n\n\S/)
-  if (!match) throw new Error('USAGE lost its `init options` block')
+  if (!match) throw new UsageError('USAGE lost its `init options` block')
   const parsed = new Set()
   for (const flag of match[1].matchAll(/^\s+--([a-z-]+) </gm)) {
     parsed.add(flag[1])
@@ -97,7 +98,7 @@ export function parseArgs(argv) {
 
     if (next === undefined || next.startsWith('--')) {
       if (INIT_VALUE_FLAGS.has(key)) {
-        throw new Error(`--${key} requires a value.`)
+        throw new UsageError(`--${key} requires a value.`)
       }
 
       flags[key] = true
@@ -135,23 +136,23 @@ export async function main(argv) {
     case 'list':
       return cmdList()
     case 'run':
-      if (!args[0]) throw new Error('run needs a job name. Run "claude-jobs list" to see them.')
+      if (!args[0]) throw new UsageError('run needs a job name. Run "claude-jobs list" to see them.')
       return cmdRun(args, flags)
     case 'install':
-      if (!args[0]) throw new Error('install needs a job name. Run "claude-jobs list" to see them.')
+      if (!args[0]) throw new UsageError('install needs a job name. Run "claude-jobs list" to see them.')
       return cmdInstall(args)
     case 'uninstall':
-      if (!args[0]) throw new Error('uninstall needs a job name. Run "claude-jobs list" to see them.')
+      if (!args[0]) throw new UsageError('uninstall needs a job name. Run "claude-jobs list" to see them.')
       return cmdUninstall(args, flags)
     case 'logs':
-      if (!args[0]) throw new Error('logs needs a job name. Run "claude-jobs list" to see them.')
+      if (!args[0]) throw new UsageError('logs needs a job name. Run "claude-jobs list" to see them.')
       return cmdLogs(args, flags)
     case 'status':
-      if (!args[0]) throw new Error('status needs a job name. Run "claude-jobs list" to see them.')
+      if (!args[0]) throw new UsageError('status needs a job name. Run "claude-jobs list" to see them.')
       return cmdStatus(args)
     case 'doctor':
       return cmdDoctor()
     default:
-      throw new Error(`unknown command "${command}". Run "claude-jobs help".`)
+      throw new UsageError(`unknown command "${command}". Run "claude-jobs help".`)
   }
 }

@@ -186,6 +186,14 @@ https://gist.github.com/vinhnguyenthanhdn/09b7430e84ddf0fdc31acf3c578ed4b5
 
 The [gist](https://gist.github.com/vinhnguyenthanhdn/09b7430e84ddf0fdc31acf3c578ed4b5) is the whole point: 55 seconds after the unit fired, the agent's report was readable by someone who has no access to that machine. What this does *not* show is a host nobody has ever logged into — the run used the CLI login of the user who installed it, which is the dependency named under Limitations.
 
+## When something fails
+
+Failures are sorted into two kinds, because they need different things from you.
+
+A mistake in what you passed prints one line naming the fix and stops there — a missing job name, an unknown scheduler, a `--skill` path that is not there. There is nothing to report.
+
+Anything else is a failure this tool did not anticipate, and those print the way out instead of a bare error string: run `claude-jobs doctor`, then paste its output into the bug-report form the message links. `doctor` is safe to paste — it redacts the account email and checks for API keys leaking into the environment. Add `CLAUDE_JOBS_DEBUG=1` to get the stack trace along with it.
+
 ## Limitations
 
 - **One daily time per job.** `--at` takes `HH:MM` and schedules that job once a day. Several times a day, weekdays only, or a full cron expression means several jobs, or editing the generated scheduler unit by hand.
